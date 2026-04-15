@@ -24,7 +24,7 @@ function renderBudgetCards(summary, month, year) {
         No budgets set for ${monthLabel(month, year)}.<br>
         <br><button class="btn btn-primary" onclick="openBudgetModal()"><i data-feather="plus"></i> Set Budget</button>
       </div>`;
-    feather.replace();
+    if (window.feather) feather.replace();
     return;
   }
 
@@ -67,7 +67,7 @@ function renderBudgetCards(summary, month, year) {
       </div>
     `;
   }).join("");
-  feather.replace();
+  if (window.feather) feather.replace();
 }
 
 function openBudgetModal(budgetId = null, catId = null, amount = null) {

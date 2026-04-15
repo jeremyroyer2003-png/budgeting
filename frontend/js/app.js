@@ -147,7 +147,7 @@ function populateAccountSelects() {
 
 // ---- Wire up navigation ----
 document.addEventListener("DOMContentLoaded", async () => {
-  feather.replace();
+  if (window.feather) feather.replace();
 
   await loadSharedData();
   populateCategorySelects();
