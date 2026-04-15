@@ -1,0 +1,13 @@
+from .transactions import transactions_bp
+from .categories import categories_bp
+from .budgets import budgets_bp
+from .goals import goals_bp
+from .alerts import alerts_bp
+from .accounts import accounts_bp
+from .dashboard import dashboard_bp
+from .recurring import recurring_bp
+
+__all__ = [
+    "transactions_bp", "categories_bp", "budgets_bp", "goals_bp",
+    "alerts_bp", "accounts_bp", "dashboard_bp", "recurring_bp"
+]
