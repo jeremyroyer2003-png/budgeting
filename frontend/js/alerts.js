@@ -48,7 +48,7 @@ function renderAlerts(alerts) {
       </div>
     `;
   }).join("");
-  feather.replace();
+  if (window.feather) feather.replace();
 }
 
 function severityIcon(severity) {

@@ -63,7 +63,7 @@ function renderTransactions(txns) {
       </tr>
     `;
   }).join("");
-  feather.replace();
+  if (window.feather) feather.replace();
 }
 
 // ---- Add Transaction Modal ----

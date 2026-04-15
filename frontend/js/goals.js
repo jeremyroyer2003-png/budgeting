@@ -23,7 +23,7 @@ function renderGoalCards(goals) {
         No financial goals yet.<br>
         <br><button class="btn btn-primary" onclick="openGoalModal()"><i data-feather="plus"></i> Create a goal</button>
       </div>`;
-    feather.replace();
+    if (window.feather) feather.replace();
     return;
   }
 
@@ -81,7 +81,7 @@ function renderGoalCards(goals) {
       </div>
     `;
   }).join("");
-  feather.replace();
+  if (window.feather) feather.replace();
 }
 
 function buildOnTrackChip(g) {

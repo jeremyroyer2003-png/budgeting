@@ -42,7 +42,9 @@ function renderSummaryCards(data) {
 }
 
 function renderTrendChart(trend) {
-  const ctx = document.getElementById("trendChart").getContext("2d");
+  const canvas = document.getElementById("trendChart");
+  if (!window.Chart || !canvas) return;
+  const ctx = canvas.getContext("2d");
   if (trendChartInstance) trendChartInstance.destroy();
 
   trendChartInstance = new Chart(ctx, {
@@ -91,7 +93,12 @@ function renderTrendChart(trend) {
 }
 
 function renderCategoryChart(categories) {
-  const ctx = document.getElementById("categoryChart").getContext("2d");
+  const canvas = document.getElementById("categoryChart");
+  if (!window.Chart || !canvas) {
+    document.getElementById("categoryLegend").innerHTML = '<div class="empty-state small">Charts unavailable</div>';
+    return;
+  }
+  const ctx = canvas.getContext("2d");
   if (categoryChartInstance) categoryChartInstance.destroy();
 
   if (!categories.length) {
@@ -190,7 +197,8 @@ function renderDashAccounts(accounts) {
     el.innerHTML = '<div class="empty-state small">No accounts found.</div>';
     return;
   }
-  const iconMap = { checking: "credit-card", savings: "piggy-bank", investment: "trending-up", credit: "credit-card", cash: "dollar-sign" };
+  // "piggy-bank" is not in the Feather icon set — use "archive" for savings accounts
+  const iconMap = { checking: "credit-card", savings: "archive", investment: "trending-up", credit: "credit-card", cash: "dollar-sign" };
   el.innerHTML = `<div class="accounts-row">` + accounts.map(a => `
     <div class="account-chip">
       <div class="account-chip-icon">
@@ -202,7 +210,7 @@ function renderDashAccounts(accounts) {
       </div>
     </div>
   `).join("") + `</div>`;
-  feather.replace();
+  if (window.feather) feather.replace();
 }
 
 function renderRecentTx(txns) {
