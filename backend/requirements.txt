@@ -4,3 +4,7 @@ flask-cors==4.0.1
 python-dateutil==2.9.0
 pytest==8.2.2
 pytest-flask==1.3.0
+# Plaid bank-sync SDK — install separately when using the bank connection feature
+# Note: may require setuptools<60 in some environments:
+#   pip install setuptools==59.8.0 && pip install plaid-python
+plaid-python>=9.0.0

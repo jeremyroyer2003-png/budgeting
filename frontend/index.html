@@ -9,6 +9,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <!-- Feather Icons — lightweight icon set -->
   <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.1/dist/feather.min.js"></script>
+  <!-- Plaid Link SDK — loaded from Plaid's CDN (requires internet access) -->
+  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
 </head>
 <body>
   <!-- ===== SIDEBAR ===== -->
@@ -156,6 +158,9 @@
         <div class="card">
           <div class="card-header">
             <h3>Account Balances</h3>
+            <button class="btn btn-ghost btn-sm" id="connectBankBtn">
+              <i data-feather="link-2"></i> Connect test bank
+            </button>
           </div>
           <div class="card-body" id="dashAccounts">
             <div class="empty-state small">Loading…</div>
@@ -439,5 +444,6 @@
   <script src="js/budgets.js"></script>
   <script src="js/goals.js"></script>
   <script src="js/alerts.js"></script>
+  <script src="js/plaid.js"></script>
 </body>
 </html>

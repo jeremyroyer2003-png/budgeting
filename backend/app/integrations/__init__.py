@@ -2,15 +2,18 @@
 Integration layer for external financial data providers.
 
 Current providers:
-  - mock   : Fake data for local development and demos
-  - plaid  : Stub ready for Plaid API credentials
-  - flinks : Stub ready for Flinks API credentials
+  - mock  : Fake data for local development and demos
+  - plaid : Sandbox / production bank sync via Plaid API
 
-To add a new provider:
-  1. Create a new file, e.g. my_bank_provider.py
-  2. Subclass BaseProvider and implement all abstract methods
-  3. Register it in PROVIDERS below
-  4. Add an API route in routes/accounts.py to trigger a sync
+To add a new provider (e.g. Flinks):
+  1. Create flinks_provider.py implementing BaseProvider
+  2. Import it below and add to PROVIDERS
+  3. Add any new routes to routes/plaid.py as a reference
+
+Provider availability:
+  - mock  : always available (no credentials needed)
+  - plaid : available when plaid-python is installed AND
+            PLAID_CLIENT_ID + PLAID_SECRET env vars are set
 """
 
 from .base_provider import BaseProvider
@@ -20,11 +23,16 @@ PROVIDERS: dict[str, type[BaseProvider]] = {
     "mock": MockProvider,
 }
 
-# Stubs for future providers — import only when credentials are configured
-# from .plaid_provider import PlaidProvider
-# from .flinks_provider import FlinksProvider
-# PROVIDERS["plaid"] = PlaidProvider
-# PROVIDERS["flinks"] = FlinksProvider
+# Plaid is registered only when the SDK is installed.
+# Install with: pip install plaid-python
+from .plaid_provider import PlaidProvider, PLAID_AVAILABLE
+if PLAID_AVAILABLE:
+    PROVIDERS["plaid"] = PlaidProvider
+
+# Future providers follow the same pattern:
+# from .flinks_provider import FlinksProvider, FLINKS_AVAILABLE
+# if FLINKS_AVAILABLE:
+#     PROVIDERS["flinks"] = FlinksProvider
 
 
 def get_provider(name: str) -> BaseProvider:

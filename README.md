@@ -26,6 +26,7 @@ ClearBudget surfaces that gap by:
 | Frontend | Vanilla HTML/CSS/JS | No build step, easy to understand, fast to iterate |
 | Charts | Chart.js (CDN) | Excellent charts with minimal setup |
 | Icons | Feather Icons (CDN) | Clean, consistent icon set |
+| Bank sync | Plaid Python SDK (optional) | Industry-standard bank connectivity, sandbox available for free |
 
 ---
 
@@ -61,10 +62,9 @@ budgeting/
 │   │   │   ├── budget_service.py
 │   │   │   └── goal_service.py
 │   │   └── integrations/        # Bank sync extension point
-│   │       ├── base_provider.py  # Abstract interface
-│   │       ├── mock_provider.py  # Demo data provider
-│   │       ├── plaid_provider.py # (stub — add credentials to enable)
-│   │       └── flinks_provider.py# (stub — add credentials to enable)
+│   │       ├── base_provider.py  # Abstract interface (RemoteAccount, RemoteTransaction)
+│   │       ├── mock_provider.py  # Demo data, no credentials needed
+│   │       └── plaid_provider.py # Full Plaid sandbox/production implementation
 │   ├── seed.py                  # Sample data seeder
 │   ├── run.py                   # Entry point
 │   └── requirements.txt
@@ -79,7 +79,8 @@ budgeting/
 │       ├── transactions.js      # Transactions CRUD
 │       ├── budgets.js           # Budget management
 │       ├── goals.js             # Financial goals
-│       └── alerts.js            # Alerts and dismissals
+│       ├── alerts.js            # Alerts and dismissals
+│       └── plaid.js             # Plaid Link connection flow
 ├── tests/
 │   ├── conftest.py              # Pytest fixtures (in-memory DB)
 │   ├── test_transactions.py
@@ -93,7 +94,15 @@ budgeting/
 
 ## Setup & Running
 
-### 1. Install Python dependencies
+### 1. Configure environment variables
+
+```bash
+cp .env.example .env
+# Edit .env — the app works without Plaid credentials,
+# but fill them in to test the bank connection flow.
+```
+
+### 2. Install Python dependencies
 
 ```bash
 cd backend
@@ -163,6 +172,11 @@ Base URL: `http://localhost:5000/api`
 | POST   | `/recurring/` | Create recurring rule |
 | PUT    | `/recurring/:id` | Update recurring rule |
 | DELETE | `/recurring/:id` | Disable recurring rule |
+| POST   | `/plaid/link-token` | Create a Plaid Link token (requires Plaid credentials) |
+| POST   | `/plaid/exchange-token` | Exchange public_token → access_token + sync data |
+| POST   | `/plaid/sync` | Re-sync all connected Plaid items |
+| GET    | `/plaid/connections` | List connected bank items |
+| DELETE | `/plaid/connections/:id` | Remove a Plaid connection |
 
 ---
 
@@ -189,7 +203,8 @@ Tests use an in-memory SQLite database seeded with base data. No external servic
 - **Accounts** — Multiple account types (checking, savings, investment, credit)
 - **Categories** — Income and expense categories with color coding
 - **Sample Data** — 3 months of realistic transactions, budgets, goals, and alerts via `seed.py`
-- **Bank Integration Layer** — Abstract provider interface ready for Plaid/Flinks
+- **Bank Integration Layer** — Abstract provider interface; Plaid sandbox fully implemented
+- **Plaid Sandbox** — "Connect test bank" button → Plaid Link → import accounts + 30 days of transactions
 
 ---
 
@@ -233,13 +248,108 @@ See [Bank Integration](#bank-account-integration) section below.
 
 ---
 
-## Bank Account Integration
+## Plaid Sandbox Setup
 
-The app is designed so that bank/credit-card syncing can be added without rewriting business logic.
+The app ships with a working Plaid sandbox integration. No real bank credentials are required — Plaid provides test logins you can use immediately.
 
-### How it works today
+### Step 1 — Get a free Plaid sandbox account
 
-`backend/app/integrations/base_provider.py` defines an abstract interface:
+1. Sign up at [dashboard.plaid.com/signup](https://dashboard.plaid.com/signup) (free, no credit card)
+2. Create a new app (any name)
+3. From the dashboard copy:
+   - **Client ID** → `PLAID_CLIENT_ID`
+   - **Sandbox secret** → `PLAID_SECRET`
+
+### Step 2 — Configure the backend
+
+```bash
+# In the project root
+cp .env.example .env
+```
+
+Edit `.env`:
+```
+PLAID_CLIENT_ID=your_client_id_here
+PLAID_SECRET=your_sandbox_secret_here
+PLAID_ENV=sandbox
+```
+
+Then export the vars before starting Flask:
+```bash
+# Linux/macOS
+export $(grep -v '^#' .env | xargs)
+
+# Or prefix the run command directly
+PLAID_CLIENT_ID=xxx PLAID_SECRET=yyy python run.py
+```
+
+### Step 3 — Run the app
+
+```bash
+cd backend && python run.py          # backend on :5000
+cd frontend && python3 -m http.server 3000  # frontend on :3000
+```
+
+### Step 4 — Connect a test bank
+
+1. Open `http://localhost:3000`
+2. On the Dashboard, click **Connect test bank** in the Account Balances card
+3. The Plaid Link dialog opens — click **Continue**
+4. Search for any institution (e.g. "Chase") or pick one from the list
+5. Use these test credentials (provided by Plaid for sandbox):
+
+   | Field | Value |
+   |---|---|
+   | Username | `user_good` |
+   | Password | `pass_good` |
+   | MFA code | any value, or click "Get code" |
+
+6. After connecting, the backend imports accounts and the last 30 days of sandbox transactions
+7. The dashboard refreshes automatically
+
+### What happens under the hood
+
+```
+Browser                    Backend                     Plaid API
+───────────────────────────────────────────────────────────────────
+Click "Connect"
+  │
+  ├─ POST /api/plaid/link-token ──────────────────► link_token_create
+  │         link_token ◄────────────────────────────
+  │
+Plaid.create({ token })
+  │
+  ├─ (user picks bank & logs in inside Plaid Link UI)
+  │
+onSuccess(public_token)
+  │
+  ├─ POST /api/plaid/exchange-token ─────────────► item_public_token_exchange
+  │         access_token ◄─────────────────────────
+  │
+  │         accounts_get ──────────────────────────► Plaid accounts API
+  │         transactions_get ─────────────────────► Plaid transactions API
+  │         (map → local Account + Transaction rows)
+  │
+Dashboard refreshes
+```
+
+### Graceful degradation
+
+If `PLAID_CLIENT_ID` / `PLAID_SECRET` are not set, every `/api/plaid/*` endpoint returns:
+```json
+{ "error": "Plaid is not configured. Set PLAID_CLIENT_ID and PLAID_SECRET..." }
+```
+with HTTP 503. All other app features continue to work normally.
+
+If `plaid-python` is not installed, the same routes return 503 with install instructions.
+
+---
+
+## Bank Account Integration Architecture
+
+### Provider interface
+
+`backend/app/integrations/base_provider.py` defines a provider-agnostic contract:
 
 ```python
 class BaseProvider(ABC):
@@ -248,32 +358,27 @@ class BaseProvider(ABC):
     def get_transactions(self, user_token, account_id, start_date, end_date) -> list[RemoteTransaction]: ...
 ```
 
-`MockProvider` implements this with realistic fake data for demos and tests.
-
-### Adding Plaid
-
-1. Sign up at [plaid.com](https://plaid.com) and obtain `client_id`, `secret`, and `access_token`
-2. `pip install plaid-python`
-3. Create `backend/app/integrations/plaid_provider.py` implementing `BaseProvider`
-4. Add an API endpoint like `POST /api/accounts/sync` that:
-   - Calls `PlaidProvider().get_transactions(user_token, account_id, start, end)`
-   - Maps `RemoteTransaction` fields to the `Transaction` model
-   - Deduplicates by `provider_transaction_id` (already a field on `Account`)
-5. Register it in `integrations/__init__.py`
+| Provider | Status | Notes |
+|---|---|---|
+| `MockProvider` | ✅ Always available | Fake data for demos and tests |
+| `PlaidProvider` | ✅ Sandbox implemented | Requires `plaid-python` + credentials |
+| `FlinksProvider` | Stub | Follow the same pattern as PlaidProvider |
 
 ### Adding Flinks
 
-Same pattern — implement `BaseProvider` using the Flinks REST API. Flinks uses a login ID + request ID flow instead of OAuth, but the abstract interface hides that detail.
+1. Create `backend/app/integrations/flinks_provider.py` implementing `BaseProvider`
+2. Flinks uses a loginId + requestId flow — the abstract interface hides that detail from callers
+3. Add `FLINKS_CLIENT_ID` / `FLINKS_API_KEY` to `.env.example`
+4. Register in `integrations/__init__.py` with the same conditional-import pattern as Plaid
 
-### Data model for sync
+### Production checklist
 
-The `Account` model already carries:
-- `is_connected: bool`
-- `provider: str` (e.g. "plaid", "flinks")
-- `provider_account_id: str`
-
-Transactions carry:
-- `recurring_transaction_id` for linking generated entries to rules
+- [ ] Encrypt `PlaidConnection.access_token` at rest (use a secrets manager or SQLAlchemy-Utils `EncryptedType`)
+- [ ] Switch `PLAID_ENV=production` and use the production secret
+- [ ] Replace polling (`transactions_get`) with Plaid webhooks + `/transactions/sync` (cursor-based)
+- [ ] Call `/item/remove` on the Plaid API when a user disconnects
+- [ ] Add `provider_transaction_id` column to `Transaction` for reliable deduplication
+- [ ] Scope Plaid `products` to only what you need (avoid requesting unnecessary data access)
 
 ---
 
