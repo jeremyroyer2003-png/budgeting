@@ -11,6 +11,14 @@ class Config:
         f"sqlite:///{os.path.join(BASE_DIR, '..', 'budgeting.db')}"
     )
 
+    # ── Plaid ──────────────────────────────────────────────────────────────
+    # All three vars must be set to enable the Plaid integration.
+    # Leave them unset and the /api/plaid/* routes return a 503 gracefully.
+    PLAID_CLIENT_ID = os.environ.get("PLAID_CLIENT_ID")
+    PLAID_SECRET    = os.environ.get("PLAID_SECRET")
+    # sandbox | development | production
+    PLAID_ENV       = os.environ.get("PLAID_ENV", "sandbox")
+
 
 class TestingConfig(Config):
     TESTING = True

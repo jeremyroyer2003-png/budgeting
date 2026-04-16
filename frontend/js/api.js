@@ -56,4 +56,14 @@ const api = {
 
   // --- Dashboard ---
   getDashboard:     (params = {}) => apiFetch(`/dashboard/?${new URLSearchParams(params)}`),
+
+  // --- Plaid sandbox ---
+  plaidLinkToken:    ()        => apiFetch("/plaid/link-token",    { method: "POST" }),
+  plaidExchangeToken:(token)   => apiFetch("/plaid/exchange-token", {
+    method: "POST",
+    body: JSON.stringify({ public_token: token }),
+  }),
+  plaidSync:         ()        => apiFetch("/plaid/sync",          { method: "POST" }),
+  plaidConnections:  ()        => apiFetch("/plaid/connections"),
+  plaidDisconnect:   (id)      => apiFetch(`/plaid/connections/${id}`, { method: "DELETE" }),
 };
