@@ -29,8 +29,12 @@ function renderBudgetCards(summary, month, year) {
   }
 
   container.innerHTML = summary.map(b => {
-    const pct       = Math.min(b.pct_used, 100);
-    const fillClass = b.over_budget ? "over" : pct >= 80 ? "warn" : "good";
+    // Bar width is visually capped at 100%; the label shows the real number
+    const barWidth  = Math.min(b.pct_used, 100);
+    const fillClass = b.over_budget ? "over" : b.pct_used >= 80 ? "warn" : "good";
+    const pctLabel  = b.over_budget
+      ? `<span class="pct-over">${b.pct_used.toFixed(0)}% used</span>`
+      : `${b.pct_used.toFixed(0)}% used`;
     const remainLabel = b.over_budget
       ? `<span class="over-label">Over by ${fmtCurrency(Math.abs(b.remaining))}</span>`
       : `${fmtCurrency(b.remaining)} left`;
@@ -49,12 +53,12 @@ function renderBudgetCards(summary, month, year) {
         </div>
         <div class="progress-wrap">
           <div class="progress-bar-bg">
-            <div class="progress-bar-fill ${fillClass}" style="width:${pct}%"></div>
+            <div class="progress-bar-fill ${fillClass}" style="width:${barWidth}%"></div>
           </div>
         </div>
         <div class="budget-footer">
           <span>${remainLabel}</span>
-          <span>${b.pct_used}% used</span>
+          <span>${pctLabel}</span>
         </div>
         <div style="display:flex;justify-content:flex-end;margin-top:8px;">
           <button class="btn btn-ghost btn-sm" onclick="openBudgetModal(${b.budget_id},${b.category_id},${b.target_amount})">

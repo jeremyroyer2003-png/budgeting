@@ -480,6 +480,7 @@ a:hover { text-decoration: underline; }
 }
 
 .budget-footer .over-label { color: var(--danger); font-weight: 600; }
+.budget-footer .pct-over   { color: var(--danger); font-weight: 700; }
 
 /* Budget inline list (dashboard) */
 .budget-mini-item {

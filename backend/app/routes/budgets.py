@@ -20,13 +20,31 @@ def list_budgets():
 @budgets_bp.post("/")
 def create_or_update_budget():
     data = request.get_json()
-    if not data or not data.get("category_id") or not data.get("target_amount"):
-        return jsonify({"error": "category_id and target_amount are required"}), 400
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    # Validate
+    errors = {}
+    if not data.get("category_id"):
+        errors["category_id"] = "Required."
+    raw_amount = data.get("target_amount")
+    parsed_amount = None
+    if raw_amount is None:
+        errors["target_amount"] = "Required."
+    else:
+        try:
+            parsed_amount = float(raw_amount)
+            if parsed_amount <= 0:
+                errors["target_amount"] = "Must be greater than 0."
+        except (TypeError, ValueError):
+            errors["target_amount"] = "Must be a valid number."
+    if errors:
+        return jsonify({"error": "Validation failed", "fields": errors}), 400
 
     month = data.get("month", date.today().month)
     year = data.get("year", date.today().year)
 
-    # Upsert: update if exists
+    # Upsert: update if exists, create otherwise
     budget = Budget.query.filter_by(
         user_id=DEFAULT_USER_ID,
         category_id=data["category_id"],
@@ -35,19 +53,20 @@ def create_or_update_budget():
     ).first()
 
     if budget:
-        budget.target_amount = float(data["target_amount"])
+        budget.target_amount = parsed_amount
+        db.session.commit()
+        return jsonify(budget.to_dict()), 200
     else:
         budget = Budget(
             user_id=DEFAULT_USER_ID,
             category_id=data["category_id"],
             month=month,
             year=year,
-            target_amount=float(data["target_amount"]),
+            target_amount=parsed_amount,
         )
         db.session.add(budget)
-
-    db.session.commit()
-    return jsonify(budget.to_dict()), 201
+        db.session.commit()
+        return jsonify(budget.to_dict()), 201
 
 
 @budgets_bp.delete("/<int:budget_id>")

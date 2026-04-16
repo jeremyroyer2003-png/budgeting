@@ -15,20 +15,71 @@ def list_goals():
     return jsonify([enrich_goal(g) for g in goals])
 
 
+VALID_GOAL_TYPES = {"savings", "investment", "debt_payoff", "purchase"}
+
+
 @goals_bp.post("/")
 def create_goal():
     data = request.get_json()
-    if not data or not data.get("name") or not data.get("target_amount"):
-        return jsonify({"error": "name and target_amount are required"}), 400
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    errors = {}
+    if not data.get("name", "").strip():
+        errors["name"] = "Required."
+
+    raw_target = data.get("target_amount")
+    parsed_target = None
+    if raw_target is None:
+        errors["target_amount"] = "Required."
+    else:
+        try:
+            parsed_target = float(raw_target)
+            if parsed_target <= 0:
+                errors["target_amount"] = "Must be greater than 0."
+        except (TypeError, ValueError):
+            errors["target_amount"] = "Must be a valid number."
+
+    goal_type = data.get("type", "savings")
+    if goal_type not in VALID_GOAL_TYPES:
+        errors["type"] = f"Must be one of: {', '.join(sorted(VALID_GOAL_TYPES))}."
+
+    raw_current = data.get("current_amount", 0.0)
+    try:
+        parsed_current = float(raw_current)
+        if parsed_current < 0:
+            errors["current_amount"] = "Cannot be negative."
+    except (TypeError, ValueError):
+        errors["current_amount"] = "Must be a valid number."
+        parsed_current = 0.0
+
+    parsed_monthly = None
+    if data.get("monthly_target") is not None:
+        try:
+            parsed_monthly = float(data["monthly_target"])
+            if parsed_monthly < 0:
+                errors["monthly_target"] = "Cannot be negative."
+        except (TypeError, ValueError):
+            errors["monthly_target"] = "Must be a valid number."
+
+    parsed_date = None
+    if data.get("target_date"):
+        try:
+            parsed_date = date.fromisoformat(data["target_date"])
+        except (ValueError, TypeError):
+            errors["target_date"] = "Must be a valid date in YYYY-MM-DD format."
+
+    if errors:
+        return jsonify({"error": "Validation failed", "fields": errors}), 400
 
     goal = Goal(
         user_id=DEFAULT_USER_ID,
-        name=data["name"],
-        type=data.get("type", "savings"),
-        target_amount=float(data["target_amount"]),
-        current_amount=float(data.get("current_amount", 0.0)),
-        monthly_target=float(data["monthly_target"]) if data.get("monthly_target") else None,
-        target_date=date.fromisoformat(data["target_date"]) if data.get("target_date") else None,
+        name=data["name"].strip(),
+        type=goal_type,
+        target_amount=parsed_target,
+        current_amount=parsed_current,
+        monthly_target=parsed_monthly,
+        target_date=parsed_date,
         notes=data.get("notes"),
     )
     db.session.add(goal)
@@ -48,7 +99,13 @@ def update_goal(goal_id):
         if amount_field in data and data[amount_field] is not None:
             setattr(goal, amount_field, float(data[amount_field]))
     if "target_date" in data:
-        goal.target_date = date.fromisoformat(data["target_date"]) if data["target_date"] else None
+        if data["target_date"]:
+            try:
+                goal.target_date = date.fromisoformat(data["target_date"])
+            except (ValueError, TypeError):
+                return jsonify({"error": "Validation failed", "fields": {"target_date": "Must be a valid date in YYYY-MM-DD format."}}), 400
+        else:
+            goal.target_date = None
     if "is_active" in data:
         goal.is_active = bool(data["is_active"])
 

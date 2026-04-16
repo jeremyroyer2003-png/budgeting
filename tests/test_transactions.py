@@ -127,3 +127,102 @@ def test_create_transaction_invalid_account(client):
         "date": date.today().isoformat(),
     })
     assert resp.status_code == 404
+
+
+# ── Validation tests ──────────────────────────────────────────────────────────
+
+def test_create_transaction_invalid_type(client):
+    account_id = _get_account_id(client)
+    resp = client.post("/api/transactions/", json={
+        "account_id": account_id,
+        "amount": 50.00,
+        "type": "debit",          # invalid — must be income or expense
+        "date": date.today().isoformat(),
+    })
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert "fields" in body
+    assert "type" in body["fields"]
+
+
+def test_create_transaction_negative_amount(client):
+    account_id = _get_account_id(client)
+    resp = client.post("/api/transactions/", json={
+        "account_id": account_id,
+        "amount": -25.00,
+        "type": "expense",
+        "date": date.today().isoformat(),
+    })
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert "amount" in body["fields"]
+
+
+def test_create_transaction_zero_amount(client):
+    account_id = _get_account_id(client)
+    resp = client.post("/api/transactions/", json={
+        "account_id": account_id,
+        "amount": 0,
+        "type": "expense",
+        "date": date.today().isoformat(),
+    })
+    assert resp.status_code == 400
+    assert "amount" in resp.get_json()["fields"]
+
+
+def test_create_transaction_bad_date(client):
+    account_id = _get_account_id(client)
+    resp = client.post("/api/transactions/", json={
+        "account_id": account_id,
+        "amount": 10.00,
+        "type": "expense",
+        "date": "not-a-date",
+    })
+    assert resp.status_code == 400
+    assert "date" in resp.get_json()["fields"]
+
+
+def test_create_transaction_missing_type(client):
+    account_id = _get_account_id(client)
+    resp = client.post("/api/transactions/", json={
+        "account_id": account_id,
+        "amount": 10.00,
+        "date": date.today().isoformat(),
+        # type omitted
+    })
+    assert resp.status_code == 400
+    assert "type" in resp.get_json()["fields"]
+
+
+def test_update_transaction_invalid_type(client):
+    account_id = _get_account_id(client)
+    category_id = _get_category_id(client)
+    create = client.post("/api/transactions/", json={
+        "account_id": account_id, "category_id": category_id,
+        "amount": 20.00, "type": "expense", "date": date.today().isoformat(),
+    })
+    tx_id = create.get_json()["id"]
+    resp = client.put(f"/api/transactions/{tx_id}", json={"type": "transfer"})
+    assert resp.status_code == 400
+    assert "type" in resp.get_json()["fields"]
+
+
+def test_update_transaction_negative_amount(client):
+    account_id = _get_account_id(client)
+    category_id = _get_category_id(client)
+    create = client.post("/api/transactions/", json={
+        "account_id": account_id, "category_id": category_id,
+        "amount": 20.00, "type": "expense", "date": date.today().isoformat(),
+    })
+    tx_id = create.get_json()["id"]
+    resp = client.put(f"/api/transactions/{tx_id}", json={"amount": -5.00})
+    assert resp.status_code == 400
+    assert "amount" in resp.get_json()["fields"]
+
+
+def test_create_transaction_no_body(client):
+    # Flask may return 415 (wrong content-type) before our handler runs,
+    # or 400 if it reaches our validation. Either is a non-2xx rejection.
+    resp = client.post("/api/transactions/", data="not json",
+                       content_type="text/plain")
+    assert resp.status_code in (400, 415)
