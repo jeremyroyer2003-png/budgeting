@@ -66,6 +66,38 @@ function renderTransactions(txns) {
   if (window.feather) feather.replace();
 }
 
+// ---- Category select — tx modal only ----
+// Targets only #txCategory (not the shared budget/filter selects).
+// Always filters by the given type so only relevant categories are shown.
+function populateTxCategorySelect(type) {
+  const sel = document.getElementById("txCategory");
+  if (!sel) {
+    console.warn("[transactions] #txCategory element not found in DOM");
+    return;
+  }
+
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Select —</option>';
+
+  const cats = (state.categories || []).filter(c => c.type === type);
+  if (!cats.length) {
+    console.warn(`[transactions] No categories for type="${type}". ` +
+      `state.categories has ${(state.categories || []).length} entries:`, state.categories);
+  }
+
+  cats.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+
+  // Restore previous selection only if it's still in the filtered list
+  if (prev && sel.querySelector(`option[value="${prev}"]`)) {
+    sel.value = prev;
+  }
+}
+
 // ---- Add Transaction Modal ----
 function openAddTxModal() {
   _editingTxId = null;
@@ -73,7 +105,12 @@ function openAddTxModal() {
   document.getElementById("txId").value = "";
   document.getElementById("txForm").reset();
   document.getElementById("txDate").value = new Date().toISOString().slice(0, 10);
-  populateCategorySelects();
+
+  // Determine type from radio (form.reset() restores HTML default: "expense")
+  const checked = document.querySelector("input[name='txType']:checked");
+  const type = checked ? checked.value : "expense";
+  populateTxCategorySelect(type);
+
   populateAccountSelects();
 
   // Default to first account
@@ -81,7 +118,7 @@ function openAddTxModal() {
     document.getElementById("txAccount").value = state.accounts[0].id;
   }
 
-  // Update category list when type changes
+  // Re-filter categories when type radio changes
   bindTxTypeChange();
   openModal("txModal");
 }
@@ -92,15 +129,19 @@ async function openEditTxModal(txId) {
     const tx = await api.getTransaction(txId);
     document.getElementById("txModalTitle").textContent = "Edit Transaction";
     document.getElementById("txId").value = tx.id;
+
+    // Set type radio first so the category list is filtered correctly
     document.querySelector(`input[name="txType"][value="${tx.type}"]`).checked = true;
     document.getElementById("txAmount").value = tx.amount;
     document.getElementById("txDate").value = tx.date;
     document.getElementById("txDescription").value = tx.description || "";
 
-    populateCategorySelects();
-    populateAccountSelects();
+    // Populate categories filtered to this tx's type, then set the saved value
+    populateTxCategorySelect(tx.type);
     document.getElementById("txCategory").value = tx.category_id || "";
-    document.getElementById("txAccount").value  = tx.account_id  || "";
+
+    populateAccountSelects();
+    document.getElementById("txAccount").value = tx.account_id || "";
 
     bindTxTypeChange();
     openModal("txModal");
@@ -110,12 +151,10 @@ async function openEditTxModal(txId) {
 }
 
 function bindTxTypeChange() {
+  // onchange assignment naturally replaces any prior handler — no stacking on repeated opens
   document.querySelectorAll("input[name='txType']").forEach(radio => {
-    radio.onchange = () => populateCategorySelects(radio.value);
+    radio.onchange = () => populateTxCategorySelect(radio.value);
   });
-  // Initial filter
-  const selected = document.querySelector("input[name='txType']:checked");
-  if (selected) populateCategorySelects(selected.value);
 }
 
 async function deleteTx(txId) {
