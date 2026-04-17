@@ -28,8 +28,15 @@ function renderGoalCards(goals) {
   }
 
   container.innerHTML = goals.map(g => {
-    const pct       = g.progress_pct;
-    const fillClass = pct >= 100 ? "good" : pct >= 50 ? "good" : "warn";
+    const pct      = g.progress_pct;
+    const ghostPct = g.ghost_pct != null ? Math.min(g.ghost_pct, 100) : null;
+
+    // Fill colour: complete → green, behind ghost → orange, otherwise green
+    let fillClass = "no-data";
+    if (pct >= 100)                            fillClass = "complete";
+    else if (ghostPct != null && pct < ghostPct) fillClass = "behind";
+    else                                         fillClass = "on-track";
+
     const onTrackEl = buildOnTrackChip(g);
 
     let metaHtml = "";
@@ -58,11 +65,15 @@ function renderGoalCards(goals) {
           <div class="goal-of-total">of ${fmtCurrency(g.target_amount)} · ${pct}% complete</div>
         </div>
 
-        <div class="progress-wrap">
-          <div class="progress-bar-bg" style="height:8px">
-            <div class="progress-bar-fill ${fillClass}" style="width:${pct}%"></div>
-          </div>
+        <!-- 3-layer Ghost Bar -->
+        <div class="goal-progress-track">
+          ${ghostPct != null
+            ? `<div class="goal-progress-ghost" style="width:${ghostPct}%"></div>`
+            : ""}
+          <div class="goal-progress-fill ${fillClass}" style="width:${Math.min(pct, 100)}%"></div>
         </div>
+
+        ${buildVelocityInsight(g)}
 
         <div class="goal-meta">${metaHtml}</div>
 
@@ -82,6 +93,39 @@ function renderGoalCards(goals) {
     `;
   }).join("");
   if (window.feather) feather.replace();
+}
+
+function buildVelocityInsight(g) {
+  if (!g.projected_completion) {
+    if (g.velocity_30d != null && g.velocity_30d <= 0) {
+      return `<div class="goal-velocity">No savings activity detected in the last 30 days.</div>`;
+    }
+    return "";
+  }
+
+  const projDate  = new Date(g.projected_completion + "T00:00:00");
+  const projLabel = projDate.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
+  const pace      = fmtCurrency(g.velocity_30d);
+  const diff      = g.projected_months_diff;
+
+  let scheduleHtml = "";
+  if (diff != null) {
+    const absDiff = Math.abs(diff);
+    const months  = absDiff < 1 ? "less than a month" : `${Math.round(absDiff)} month${Math.round(absDiff) !== 1 ? "s" : ""}`;
+    if (diff > 0.5) {
+      scheduleHtml = ` — <span class="behind">${months} late</span>`;
+    } else if (diff < -0.5) {
+      scheduleHtml = ` — <span class="ahead">${months} early</span>`;
+    } else {
+      scheduleHtml = ` — <span class="ahead">right on schedule</span>`;
+    }
+  }
+
+  return `
+    <div class="goal-velocity">
+      Saving <strong>${pace}</strong> over last 30 days.
+      At this pace, you'll reach your goal by <strong>${projLabel}</strong>${scheduleHtml}.
+    </div>`;
 }
 
 function buildOnTrackChip(g) {
