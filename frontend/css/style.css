@@ -1039,6 +1039,30 @@ textarea.form-control { resize: vertical; }
 
 .auth-form .form-group { margin-bottom: 16px; }
 
+/* Password field with eye toggle */
+.pw-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pw-wrapper .form-control {
+  padding-right: 40px;
+  flex: 1;
+}
+.pw-eye {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+.pw-eye:hover { color: var(--text-secondary); }
+.pw-eye svg   { width: 16px; height: 16px; }
+
 .auth-btn {
   width: 100%;
   justify-content: center;

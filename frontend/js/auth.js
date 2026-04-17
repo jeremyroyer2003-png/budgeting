@@ -114,6 +114,19 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("loginBtn").dataset.label    = "Sign in";
   document.getElementById("registerBtn").dataset.label = "Create account";
 
+  // Eye toggle — show/hide password
+  document.querySelectorAll(".pw-eye").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      btn.innerHTML = isHidden
+        ? '<i data-feather="eye-off"></i>'
+        : '<i data-feather="eye"></i>';
+      if (window.feather) feather.replace();
+    });
+  });
+
   // Panel toggle links
   document.getElementById("showRegister").addEventListener("click", e => {
     e.preventDefault(); _switchPanel("register");
@@ -144,9 +157,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("registerForm").addEventListener("submit", async e => {
     e.preventDefault();
     _clearError("registerError");
-    const pw  = document.getElementById("regPassword").value;
+    const pw      = document.getElementById("regPassword").value;
+    const pwConfirm = document.getElementById("regPasswordConfirm").value;
     if (pw.length < 8) {
       _showError("registerError", "Password must be at least 8 characters.");
+      return;
+    }
+    if (pw !== pwConfirm) {
+      _showError("registerError", "Passwords do not match.");
       return;
     }
     const btn = document.getElementById("registerBtn");
