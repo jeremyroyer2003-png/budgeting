@@ -23,18 +23,24 @@ def test_create_budget(client):
 
 
 def test_upsert_budget(client):
-    """Creating a budget for the same category/month/year updates it."""
-    category_id = _get_category_id(client)
+    """
+    First POST for a category/month/year creates (201).
+    Second POST for the same key updates (200) and changes the amount.
+    Uses Shopping to avoid colliding with test_create_budget's Housing entry.
+    """
+    category_id = _get_category_id(client, name="Shopping")
     today = date.today()
-    client.post("/api/budgets/", json={
+    first = client.post("/api/budgets/", json={
         "category_id": category_id, "target_amount": 1000.00,
         "month": today.month, "year": today.year,
     })
+    assert first.status_code == 201   # create → 201
+
     resp = client.post("/api/budgets/", json={
         "category_id": category_id, "target_amount": 1500.00,
         "month": today.month, "year": today.year,
     })
-    assert resp.status_code == 201
+    assert resp.status_code == 200    # update → 200
     assert resp.get_json()["target_amount"] == 1500.00
 
 

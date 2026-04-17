@@ -15,15 +15,16 @@ the app continues to work normally.
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, current_app, request, jsonify
+from flask_jwt_extended import jwt_required
 
 from ..extensions import db
 from ..models import Account, Category, Transaction
 from ..models.plaid_connection import PlaidConnection
 from ..integrations.plaid_provider import PlaidProvider, PLAID_AVAILABLE, build_plaid_client
+from ..utils.auth import current_user_id
 
 plaid_bp = Blueprint("plaid", __name__)
 
-DEFAULT_USER_ID = 1
 # How many days of history to pull on the first sync
 INITIAL_SYNC_DAYS = 30
 
@@ -72,6 +73,7 @@ def _find_category_id(hint: str | None, tx_type: str) -> int | None:
 # ── Routes ─────────────────────────────────────────────────────────────────
 
 @plaid_bp.post("/link-token")
+@jwt_required()
 def create_link_token():
     """
     Step 1 of the Link flow: generate a short-lived link_token for the frontend.
@@ -99,7 +101,7 @@ def create_link_token():
             language="en",
             # client_user_id ties the Link session to our user.
             # Use the real user's ID/UUID here in production.
-            user=LinkTokenCreateRequestUser(client_user_id=str(DEFAULT_USER_ID)),
+            user=LinkTokenCreateRequestUser(client_user_id=str(current_user_id())),
         )
         response = client.link_token_create(link_request)
         return jsonify({"link_token": response.link_token})
@@ -109,6 +111,7 @@ def create_link_token():
 
 
 @plaid_bp.post("/exchange-token")
+@jwt_required()
 def exchange_token():
     """
     Step 2 of the Link flow: exchange the one-time public_token returned by
@@ -157,7 +160,7 @@ def exchange_token():
             connection.institution_name = institution_name
         else:
             connection = PlaidConnection(
-                user_id          = DEFAULT_USER_ID,
+                user_id          = current_user_id(),
                 item_id          = item_id,
                 access_token     = access_token,
                 institution_name = institution_name,
@@ -174,6 +177,7 @@ def exchange_token():
 
 
 @plaid_bp.post("/sync")
+@jwt_required()
 def sync_all():
     """
     Re-sync every PlaidConnection for this user.
@@ -188,7 +192,7 @@ def sync_all():
     if not _plaid_configured():
         return _not_configured_response()
 
-    connections = PlaidConnection.query.filter_by(user_id=DEFAULT_USER_ID).all()
+    connections = PlaidConnection.query.filter_by(user_id=current_user_id()).all()
     if not connections:
         return jsonify({"message": "No Plaid connections found. Connect a bank first."}), 200
 
@@ -209,13 +213,15 @@ def sync_all():
 
 
 @plaid_bp.get("/connections")
+@jwt_required()
 def list_connections():
     """List all Plaid-connected bank items for this user."""
-    connections = PlaidConnection.query.filter_by(user_id=DEFAULT_USER_ID).all()
+    connections = PlaidConnection.query.filter_by(user_id=current_user_id()).all()
     return jsonify([c.to_dict() for c in connections])
 
 
 @plaid_bp.delete("/connections/<int:conn_id>")
+@jwt_required()
 def delete_connection(conn_id: int):
     """
     Remove a Plaid connection.
@@ -224,7 +230,7 @@ def delete_connection(conn_id: int):
     access_token and stop Plaid from holding the bank credentials.
     """
     conn = PlaidConnection.query.filter_by(
-        id=conn_id, user_id=DEFAULT_USER_ID
+        id=conn_id, user_id=current_user_id()
     ).first_or_404()
     db.session.delete(conn)
     db.session.commit()
@@ -265,7 +271,7 @@ def _sync_connection(connection: PlaidConnection) -> dict:
             local_acct = existing
         else:
             local_acct = Account(
-                user_id              = DEFAULT_USER_ID,
+                user_id              = connection.user_id,
                 name                 = remote.name,
                 type                 = remote.type,
                 balance              = remote.balance,

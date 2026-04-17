@@ -146,12 +146,8 @@ function populateAccountSelects() {
 }
 
 // ---- Wire up navigation ----
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   if (window.feather) feather.replace();
-
-  await loadSharedData();
-  populateCategorySelects();
-  populateAccountSelects();
 
   // Nav links
   document.querySelectorAll(".nav-item, .card-link").forEach(link => {
@@ -187,12 +183,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     openAddTxModal();
   });
 
-  // Initial page load
-  navigateTo("dashboard");
-
-  // Refresh alert badge
-  refreshAlertBadge();
+  // auth.js calls _appBoot() after a successful login / on page load if already authenticated
 });
+
+// Called by auth.js once a valid session is confirmed
+window._appBoot = async function _appBoot() {
+  await loadSharedData();
+  populateCategorySelects();
+  populateAccountSelects();
+  navigateTo("dashboard");
+  refreshAlertBadge();
+};
 
 async function refreshAlertBadge() {
   try {

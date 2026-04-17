@@ -480,6 +480,7 @@ a:hover { text-decoration: underline; }
 }
 
 .budget-footer .over-label { color: var(--danger); font-weight: 600; }
+.budget-footer .pct-over   { color: var(--danger); font-weight: 700; }
 
 /* Budget inline list (dashboard) */
 .budget-mini-item {
@@ -986,3 +987,117 @@ textarea.form-control { resize: vertical; }
 @media (max-width: 400px) {
   .card-grid-4 { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   AUTH SCREEN
+   ============================================================ */
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.auth-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.auth-app-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.auth-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.auth-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.auth-form .form-group { margin-bottom: 16px; }
+
+/* Password field with eye toggle */
+.pw-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pw-wrapper .form-control {
+  padding-right: 40px;
+  flex: 1;
+}
+.pw-eye {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+.pw-eye:hover { color: var(--text-secondary); }
+.pw-eye svg   { width: 16px; height: 16px; }
+
+.auth-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+  padding: 10px;
+}
+
+.auth-error {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.auth-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* Logout button in sidebar */
+.logout-btn {
+  margin-left: auto;
+  color: var(--sidebar-text);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.logout-btn:hover { opacity: 1; color: #fff; }
+.logout-btn svg   { width: 15px; height: 15px; }

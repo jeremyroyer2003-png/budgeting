@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from ..extensions import db
 from ..models import Category
 
@@ -12,6 +13,7 @@ def list_categories():
 
 
 @categories_bp.post("/")
+@jwt_required()
 def create_category():
     data = request.get_json()
     if not data or not data.get("name") or not data.get("type"):
@@ -32,6 +34,7 @@ def create_category():
 
 
 @categories_bp.put("/<int:cat_id>")
+@jwt_required()
 def update_category(cat_id):
     cat = Category.query.get_or_404(cat_id)
     data = request.get_json()
@@ -46,6 +49,7 @@ def update_category(cat_id):
 
 
 @categories_bp.delete("/<int:cat_id>")
+@jwt_required()
 def delete_category(cat_id):
     cat = Category.query.get_or_404(cat_id)
     if cat.is_system:

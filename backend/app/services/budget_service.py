@@ -37,6 +37,9 @@ def get_budget_summary(user_id: int, month: int, year: int) -> list:
     for b in budgets:
         actual = actuals.get(b.category_id, 0.0)
         remaining = round(b.target_amount - actual, 2)
+        # pct_used is NOT capped at 100 — callers that want to display a bar should
+        # clamp the width themselves, but the raw value must reflect the true overrun
+        # (e.g. 143% when $143 is spent against a $100 budget).
         pct_used = round(actual / b.target_amount * 100, 1) if b.target_amount > 0 else 0.0
         summary.append({
             "budget_id": b.id,
@@ -47,7 +50,7 @@ def get_budget_summary(user_id: int, month: int, year: int) -> list:
             "actual_amount": actual,
             "remaining": remaining,
             "over_budget": actual > b.target_amount,
-            "pct_used": min(pct_used, 100.0),
+            "pct_used": pct_used,
             "month": month,
             "year": year,
         })
