@@ -197,6 +197,7 @@ def seed():
             db.session.add(b)
 
         # --- Goals ---
+        from datetime import datetime
         goals = [
             Goal(
                 user_id=user.id,
@@ -207,6 +208,7 @@ def seed():
                 monthly_target=600.00,
                 target_date=date(today.year + 1, today.month, 1),
                 notes="3 months of living expenses",
+                created_at=datetime(today.year - 1, today.month, 1),
             ),
             Goal(
                 user_id=user.id,
@@ -217,6 +219,7 @@ def seed():
                 monthly_target=500.00,
                 target_date=date(today.year, 12, 31),
                 notes="Max out annual TFSA room",
+                created_at=datetime(today.year, 1, 1),
             ),
             Goal(
                 user_id=user.id,
@@ -227,6 +230,7 @@ def seed():
                 monthly_target=1_200.00,
                 target_date=date(today.year + 5, today.month, 1),
                 notes="20% down on a $400K property",
+                created_at=datetime(today.year - 2, today.month, 1),
             ),
             Goal(
                 user_id=user.id,
@@ -237,6 +241,7 @@ def seed():
                 monthly_target=350.00,
                 target_date=date(today.year, 12, 1),
                 notes="Europe trip in December",
+                created_at=datetime(today.year, 1, 1),
             ),
         ]
         db.session.add_all(goals)

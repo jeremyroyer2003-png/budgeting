@@ -191,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (isAuthenticated()) {
     updateSidebarUser(getStoredUser());
     showApp();
-    // app.js will call _appBoot via window._appBoot after DOMContentLoaded
+    if (window._appBoot) window._appBoot();
   } else {
     showAuthScreen("login");
   }
