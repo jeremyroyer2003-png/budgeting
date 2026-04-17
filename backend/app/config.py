@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -10,6 +11,10 @@ class Config:
         "DATABASE_URL",
         f"sqlite:///{os.path.join(BASE_DIR, '..', 'budgeting.db')}"
     )
+
+    # ── JWT ────────────────────────────────────────────────────────────────
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=30)   # long-lived for dev comfort
 
     # ── Plaid ──────────────────────────────────────────────────────────────
     # All three vars must be set to enable the Plaid integration.
@@ -23,6 +28,8 @@ class Config:
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    JWT_SECRET_KEY = "test-jwt-secret-key-long-enough-for-hs256"
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
 
 
 config = {

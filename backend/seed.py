@@ -45,7 +45,8 @@ def seed():
         db.create_all()
 
         # --- User ---
-        user = User(email="demo@budgetapp.com", name="Alex Morgan")
+        user = User(email="demo@clearbudget.app", name="Alex Morgan")
+        user.set_password("demo1234")
         db.session.add(user)
         db.session.flush()
 
@@ -270,6 +271,7 @@ def seed():
 
         print("✓ Database seeded successfully.")
         print(f"  User:         {user.name} ({user.email})")
+        print(f"  Password:     demo1234")
         print(f"  Accounts:     {checking.name}, {savings.name}, {invest.name}")
         print(f"  Categories:   {len(CATEGORIES)}")
         print(f"  Transactions: {Transaction.query.count()}")

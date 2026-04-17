@@ -1,18 +1,18 @@
 from datetime import date
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from ..extensions import db
 from ..models import Transaction, Account, Category
+from ..utils.auth import current_user_id
 
 transactions_bp = Blueprint("transactions", __name__)
-
-DEFAULT_USER_ID = 1  # swapped for real auth in multi-user phase
 
 VALID_TX_TYPES = {"income", "expense"}
 
 
 def _user_account_ids():
-    """Return account IDs that belong to the default user."""
-    return [a.id for a in Account.query.filter_by(user_id=DEFAULT_USER_ID).all()]
+    """Return account IDs that belong to the current authenticated user."""
+    return [a.id for a in Account.query.filter_by(user_id=current_user_id()).all()]
 
 
 def _validate_tx_fields(data, require_all=True):
@@ -59,6 +59,7 @@ def _validate_tx_fields(data, require_all=True):
 
 
 @transactions_bp.get("/")
+@jwt_required()
 def list_transactions():
     account_ids = _user_account_ids()
     q = Transaction.query.filter(Transaction.account_id.in_(account_ids))
@@ -92,6 +93,7 @@ def list_transactions():
 
 
 @transactions_bp.post("/")
+@jwt_required()
 def create_transaction():
     data = request.get_json()
     if not data:
@@ -128,6 +130,7 @@ def create_transaction():
 
 
 @transactions_bp.get("/<int:tx_id>")
+@jwt_required()
 def get_transaction(tx_id):
     account_ids = _user_account_ids()
     tx = Transaction.query.filter(
@@ -138,6 +141,7 @@ def get_transaction(tx_id):
 
 
 @transactions_bp.put("/<int:tx_id>")
+@jwt_required()
 def update_transaction(tx_id):
     account_ids = _user_account_ids()
     tx = Transaction.query.filter(
@@ -183,6 +187,7 @@ def update_transaction(tx_id):
 
 
 @transactions_bp.delete("/<int:tx_id>")
+@jwt_required()
 def delete_transaction(tx_id):
     account_ids = _user_account_ids()
     tx = Transaction.query.filter(

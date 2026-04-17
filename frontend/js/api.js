@@ -9,10 +9,18 @@ const API_BASE = "http://localhost:5000/api";
 
 async function apiFetch(path, options = {}) {
   const url = `${API_BASE}${path}`;
+  const token = window.getToken ? window.getToken() : null;
   const defaults = {
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    },
   };
-  const res = await fetch(url, { ...defaults, ...options });
+  const res = await fetch(url, { ...defaults, ...options, headers: { ...defaults.headers, ...(options.headers || {}) } });
+  if (res.status === 401) {
+    if (window.logout) window.logout();
+    throw new Error("Session expired. Please log in again.");
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `Request failed: ${res.status}`);

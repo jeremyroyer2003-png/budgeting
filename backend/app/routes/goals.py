@@ -1,24 +1,25 @@
 from datetime import date
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from ..extensions import db
 from ..models import Goal
 from ..services.goal_service import enrich_goal
+from ..utils.auth import current_user_id
 
 goals_bp = Blueprint("goals", __name__)
-
-DEFAULT_USER_ID = 1
-
-
-@goals_bp.get("/")
-def list_goals():
-    goals = Goal.query.filter_by(user_id=DEFAULT_USER_ID, is_active=True).all()
-    return jsonify([enrich_goal(g) for g in goals])
-
 
 VALID_GOAL_TYPES = {"savings", "investment", "debt_payoff", "purchase"}
 
 
+@goals_bp.get("/")
+@jwt_required()
+def list_goals():
+    goals = Goal.query.filter_by(user_id=current_user_id(), is_active=True).all()
+    return jsonify([enrich_goal(g) for g in goals])
+
+
 @goals_bp.post("/")
+@jwt_required()
 def create_goal():
     data = request.get_json()
     if not data:
@@ -73,7 +74,7 @@ def create_goal():
         return jsonify({"error": "Validation failed", "fields": errors}), 400
 
     goal = Goal(
-        user_id=DEFAULT_USER_ID,
+        user_id=current_user_id(),
         name=data["name"].strip(),
         type=goal_type,
         target_amount=parsed_target,
@@ -88,8 +89,9 @@ def create_goal():
 
 
 @goals_bp.put("/<int:goal_id>")
+@jwt_required()
 def update_goal(goal_id):
-    goal = Goal.query.filter_by(id=goal_id, user_id=DEFAULT_USER_ID).first_or_404()
+    goal = Goal.query.filter_by(id=goal_id, user_id=current_user_id()).first_or_404()
     data = request.get_json()
 
     for field in ("name", "type", "notes"):
@@ -103,7 +105,8 @@ def update_goal(goal_id):
             try:
                 goal.target_date = date.fromisoformat(data["target_date"])
             except (ValueError, TypeError):
-                return jsonify({"error": "Validation failed", "fields": {"target_date": "Must be a valid date in YYYY-MM-DD format."}}), 400
+                return jsonify({"error": "Validation failed",
+                                "fields": {"target_date": "Must be a valid date in YYYY-MM-DD format."}}), 400
         else:
             goal.target_date = None
     if "is_active" in data:
@@ -114,8 +117,9 @@ def update_goal(goal_id):
 
 
 @goals_bp.delete("/<int:goal_id>")
+@jwt_required()
 def delete_goal(goal_id):
-    goal = Goal.query.filter_by(id=goal_id, user_id=DEFAULT_USER_ID).first_or_404()
+    goal = Goal.query.filter_by(id=goal_id, user_id=current_user_id()).first_or_404()
     goal.is_active = False  # soft delete
     db.session.commit()
     return jsonify({"deleted": goal_id})

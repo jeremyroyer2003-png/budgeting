@@ -1,18 +1,22 @@
 from datetime import date
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from ..extensions import db
 from ..models import RecurringTransaction, Account
+from ..utils.auth import current_user_id
 
 recurring_bp = Blueprint("recurring", __name__)
 
-DEFAULT_USER_ID = 1
+VALID_TX_TYPES    = {"income", "expense"}
+VALID_FREQUENCIES = {"daily", "weekly", "monthly", "yearly"}
 
 
 def _user_account_ids():
-    return [a.id for a in Account.query.filter_by(user_id=DEFAULT_USER_ID).all()]
+    return [a.id for a in Account.query.filter_by(user_id=current_user_id()).all()]
 
 
 @recurring_bp.get("/")
+@jwt_required()
 def list_recurring():
     account_ids = _user_account_ids()
     rules = RecurringTransaction.query.filter(
@@ -22,11 +26,8 @@ def list_recurring():
     return jsonify([r.to_dict() for r in rules])
 
 
-VALID_TX_TYPES    = {"income", "expense"}
-VALID_FREQUENCIES = {"daily", "weekly", "monthly", "yearly"}
-
-
 @recurring_bp.post("/")
+@jwt_required()
 def create_recurring():
     data = request.get_json()
     if not data:
@@ -72,7 +73,7 @@ def create_recurring():
         return jsonify({"error": "Validation failed", "fields": errors}), 400
 
     account_ids = _user_account_ids()
-    account_id = data.get("account_id")
+    account_id  = data.get("account_id")
     if account_id not in account_ids:
         return jsonify({"error": "Account not found"}), 404
 
@@ -93,6 +94,7 @@ def create_recurring():
 
 
 @recurring_bp.put("/<int:rule_id>")
+@jwt_required()
 def update_recurring(rule_id):
     account_ids = _user_account_ids()
     rule = RecurringTransaction.query.filter(
@@ -116,6 +118,7 @@ def update_recurring(rule_id):
 
 
 @recurring_bp.delete("/<int:rule_id>")
+@jwt_required()
 def delete_recurring(rule_id):
     account_ids = _user_account_ids()
     rule = RecurringTransaction.query.filter(
