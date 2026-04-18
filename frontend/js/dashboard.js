@@ -14,6 +14,7 @@ async function loadDashboard() {
   try {
     const data = await api.getDashboard({ month, year });
     renderSummaryCards(data);
+    renderProjection(data.projection);
     renderTrendChart(data.monthly_trend);
     renderCategoryChart(data.spending_by_category);
     renderDashBudgets(data.budget_summary);
@@ -39,6 +40,40 @@ function renderSummaryCards(data) {
   netEl.style.color = data.net >= 0 ? "var(--success)" : "var(--danger)";
 
   document.getElementById("statSavingsRate").textContent = `${data.savings_rate}%`;
+}
+
+function renderProjection(p) {
+  const card = document.getElementById("projectionCard");
+  if (!p) { card.style.display = "none"; return; }
+  card.style.display = "";
+
+  // Progress bar — how far through the month we are
+  document.getElementById("projMonthFill").style.width = `${p.month_pct}%`;
+  document.getElementById("projMonthLabel").textContent =
+    `Day ${p.days_elapsed} of ${p.days_in_month} · ${p.days_remaining} day${p.days_remaining !== 1 ? "s" : ""} remaining`;
+
+  // Confidence badge
+  const badge = document.getElementById("projConfidence");
+  badge.textContent = { low: "Low confidence", medium: "Medium confidence", high: "High confidence" }[p.confidence] || "";
+  badge.className = `proj-confidence-badge ${p.confidence}`;
+
+  // Values
+  document.getElementById("projIncome").textContent  = fmtCurrency(p.projected_income);
+  document.getElementById("projExpense").textContent = fmtCurrency(p.projected_expense);
+
+  const netEl = document.getElementById("projNet");
+  netEl.textContent = fmtCurrency(p.projected_net);
+  netEl.style.color = p.projected_net >= 0 ? "var(--success)" : "var(--danger)";
+
+  // Subscriptions note
+  const note = document.getElementById("projSubsNote");
+  if (p.subs_due_count > 0) {
+    note.style.display = "";
+    note.innerHTML = `<i data-feather="repeat"></i> ${p.subs_due_count} subscription${p.subs_due_count > 1 ? "s" : ""} due before month-end · ${fmtCurrency(p.subs_due_total)} already included above`;
+    if (window.feather) feather.replace();
+  } else {
+    note.style.display = "none";
+  }
 }
 
 function renderTrendChart(trend) {

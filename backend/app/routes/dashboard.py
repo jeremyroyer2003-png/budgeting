@@ -1,3 +1,4 @@
+import calendar
 from datetime import date
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
@@ -6,6 +7,7 @@ from ..extensions import db
 from ..models import Transaction, Account, Goal, Alert, Budget, Category
 from ..services.budget_service import get_budget_summary
 from ..services.goal_service import enrich_goal
+from ..services.subscription_service import detect_subscriptions
 from ..utils.auth import current_user_id
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -106,6 +108,44 @@ def get_dashboard():
     # --- Unread alerts ---
     unread_alerts = Alert.query.filter_by(user_id=uid, is_read=False).count()
 
+    # --- Month-end projection (current month only) ---
+    projection = None
+    if month == today.month and year == today.year and account_ids:
+        days_in_month  = calendar.monthrange(year, month)[1]
+        days_elapsed   = today.day
+        days_remaining = days_in_month - days_elapsed
+
+        daily_income  = total_income  / days_elapsed if days_elapsed else 0.0
+        daily_expense = total_expenses / days_elapsed if days_elapsed else 0.0
+
+        proj_income  = round(total_income  + daily_income  * days_remaining, 2)
+        proj_expense = round(total_expenses + daily_expense * days_remaining, 2)
+
+        # Add subscriptions due before month end that haven't been paid yet
+        month_end = date(year, month, days_in_month)
+        subs = detect_subscriptions(account_ids)
+        subs_due = [
+            s for s in subs
+            if s.next_estimated and today < date.fromisoformat(s.next_estimated) <= month_end
+        ]
+        subs_due_total = round(sum(s.last_amount for s in subs_due), 2)
+        proj_expense   = round(proj_expense + subs_due_total, 2)
+
+        confidence = "low" if days_elapsed < 7 else "medium" if days_elapsed < 14 else "high"
+
+        projection = {
+            "days_in_month":   days_in_month,
+            "days_elapsed":    days_elapsed,
+            "days_remaining":  days_remaining,
+            "month_pct":       round(days_elapsed / days_in_month * 100, 1),
+            "projected_income":  proj_income,
+            "projected_expense": proj_expense,
+            "projected_net":     round(proj_income - proj_expense, 2),
+            "subs_due_count":  len(subs_due),
+            "subs_due_total":  subs_due_total,
+            "confidence":      confidence,
+        }
+
     return jsonify({
         "month":               month,
         "year":                year,
@@ -121,4 +161,5 @@ def get_dashboard():
         "goals":               goals_data,
         "recent_transactions": [t.to_dict() for t in recent],
         "unread_alerts":       unread_alerts,
+        "projection":          projection,
     })

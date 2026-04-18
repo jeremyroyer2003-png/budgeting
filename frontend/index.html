@@ -138,6 +138,35 @@
           </div>
         </div>
 
+        <!-- Month-end projection (current month only) -->
+        <div class="card" id="projectionCard" style="display:none">
+          <div class="card-header">
+            <h3><i data-feather="trending-up"></i> Month-End Projection</h3>
+            <span class="proj-confidence-badge" id="projConfidence"></span>
+          </div>
+          <div class="card-body">
+            <div class="proj-month-bar">
+              <div class="proj-month-fill" id="projMonthFill"></div>
+              <span class="proj-month-label" id="projMonthLabel"></span>
+            </div>
+            <div class="proj-row-grid">
+              <div class="proj-stat">
+                <div class="proj-stat-label">Projected Income</div>
+                <div class="proj-stat-value income" id="projIncome">—</div>
+              </div>
+              <div class="proj-stat">
+                <div class="proj-stat-label">Projected Expenses</div>
+                <div class="proj-stat-value expense" id="projExpense">—</div>
+              </div>
+              <div class="proj-stat">
+                <div class="proj-stat-label">Projected Net</div>
+                <div class="proj-stat-value" id="projNet">—</div>
+              </div>
+            </div>
+            <div class="proj-subs-note" id="projSubsNote" style="display:none"></div>
+          </div>
+        </div>
+
         <!-- Budget overview + Goals row -->
         <div class="card-grid-2">
           <div class="card">

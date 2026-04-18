@@ -1251,3 +1251,71 @@ textarea.form-control { resize: vertical; }
 }
 .logout-btn:hover { opacity: 1; color: #fff; }
 .logout-btn svg   { width: 15px; height: 15px; }
+
+/* ---- Month-end Projection Widget ---- */
+.proj-month-bar {
+  position: relative;
+  height: 8px;
+  background: var(--bg);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.proj-month-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent, #6366f1));
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+.proj-month-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+.proj-row-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.proj-stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.proj-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.proj-stat-value.income  { color: var(--success); }
+.proj-stat-value.expense { color: var(--danger); }
+.proj-subs-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.proj-subs-note svg { width: 13px; height: 13px; flex-shrink: 0; }
+.proj-confidence-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid currentColor;
+}
+.proj-confidence-badge.high   { color: var(--success); }
+.proj-confidence-badge.medium { color: var(--warning); }
+.proj-confidence-badge.low    { color: var(--text-muted); }
+
+@media (max-width: 600px) {
+  .proj-row-grid { grid-template-columns: 1fr 1fr; }
+  .proj-stat-value { font-size: 18px; }
+}
