@@ -41,21 +41,27 @@ function renderTransactions(txns) {
     return;
   }
   tbody.innerHTML = txns.map(t => {
-    const isIncome = t.type === "income";
-    const amtClass = isIncome ? "amount-income" : "amount-expense";
-    const sign     = isIncome ? "+" : "−";
-    const catColor = t.category_color || "#94A3B8";
+    const isIncome   = t.type === "income";
+    const amtClass   = t.is_transfer ? "amount-transfer" : isIncome ? "amount-income" : "amount-expense";
+    const sign       = isIncome ? "+" : "−";
+    const catColor   = t.category_color || "#94A3B8";
+    const transferBadge = t.is_transfer
+      ? `<span class="transfer-badge"><i data-feather="repeat"></i> Transfer</span>`
+      : "";
     return `
-      <tr>
+      <tr class="${t.is_transfer ? "tx-row-transfer" : ""}">
         <td class="tx-date">${fmtDate(t.date)}</td>
-        <td class="tx-desc">${escHtml(t.description || "—")}</td>
+        <td class="tx-desc">
+          ${escHtml(t.description || "—")}
+          ${transferBadge}
+        </td>
         <td>
           ${t.category_name
             ? `<span class="cat-pill"><span class="cat-dot" style="background:${catColor}"></span>${escHtml(t.category_name)}</span>`
             : "—"}
         </td>
         <td class="tx-account">${escHtml(t.account_name || "—")}</td>
-        <td class="text-right ${amtClass}">${sign}${fmtCurrency(t.amount)}</td>
+        <td class="text-right ${amtClass}">${t.is_transfer ? "⇄" : sign}${fmtCurrency(t.amount)}</td>
         <td class="text-right">
           <button class="btn-icon" title="Edit"    onclick="openEditTxModal(${t.id})"><i data-feather="edit-2"></i></button>
           <button class="btn-icon" title="Delete"  onclick="deleteTx(${t.id})"><i data-feather="trash-2"></i></button>

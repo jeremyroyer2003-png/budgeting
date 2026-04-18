@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required
 from ..extensions import db
 from ..models import Transaction, Account, Category
 from ..utils.auth import current_user_id
+from ..services.transfer_detection_service import detect_and_mark, scan_user_transfers
 
 transactions_bp = Blueprint("transactions", __name__)
 
@@ -65,16 +66,19 @@ def list_transactions():
     q = Transaction.query.filter(Transaction.account_id.in_(account_ids))
 
     # Optional filters
-    category_id = request.args.get("category_id", type=int)
-    tx_type = request.args.get("type")
-    month = request.args.get("month", type=int)
-    year = request.args.get("year", type=int)
-    limit = request.args.get("limit", type=int)
+    category_id        = request.args.get("category_id", type=int)
+    tx_type            = request.args.get("type")
+    month              = request.args.get("month", type=int)
+    year               = request.args.get("year", type=int)
+    limit              = request.args.get("limit", type=int)
+    exclude_transfers  = request.args.get("exclude_transfers", "false").lower() == "true"
 
     if category_id:
         q = q.filter_by(category_id=category_id)
     if tx_type in ("income", "expense"):
         q = q.filter_by(type=tx_type)
+    if exclude_transfers:
+        q = q.filter(Transaction.is_transfer == False)
     if month and year:
         from sqlalchemy import extract
         q = q.filter(
@@ -90,6 +94,19 @@ def list_transactions():
         q = q.limit(limit)
 
     return jsonify([t.to_dict() for t in q.all()])
+
+
+@transactions_bp.post("/detect-transfers")
+@jwt_required()
+def detect_transfers():
+    """
+    Scan all existing transactions for this user and mark internal transfers.
+    Call this after connecting a new bank account.
+    """
+    account_ids = _user_account_ids()
+    result = scan_user_transfers(account_ids)
+    db.session.commit()
+    return jsonify(result)
 
 
 @transactions_bp.post("/")
@@ -117,8 +134,12 @@ def create_transaction():
         date=parsed_date,
     )
     db.session.add(tx)
+    db.session.flush()  # give tx an id before detection
 
-    # Update account balance
+    # Auto-detect internal transfers (layers 1 + 2)
+    detect_and_mark(tx, account_ids)
+
+    # Update account balance (only if not a transfer)
     account = db.session.get(Account, account_id)
     if tx.type == "income":
         account.balance += tx.amount

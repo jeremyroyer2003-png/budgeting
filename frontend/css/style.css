@@ -1135,6 +1135,25 @@ textarea.form-control { resize: vertical; }
   font-weight: 400;
 }
 
+/* Transfer badge in transaction list */
+.transfer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.transfer-badge svg  { width: 10px; height: 10px; }
+.tx-row-transfer td  { opacity: 0.6; }
+.amount-transfer     { color: var(--text-muted); }
+
 /* Logout button in sidebar */
 .logout-btn {
   margin-left: auto;
