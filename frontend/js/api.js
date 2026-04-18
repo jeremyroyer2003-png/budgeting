@@ -57,10 +57,12 @@ const api = {
   deleteGoal:       (id)          => apiFetch(`/goals/${id}`, { method: "DELETE" }),
 
   // --- Alerts ---
-  getAlerts:        (params = {}) => apiFetch(`/alerts/?${new URLSearchParams(params)}`),
-  markAlertRead:    (id)          => apiFetch(`/alerts/${id}/read`, { method: "POST" }),
-  markAllRead:      ()            => apiFetch("/alerts/read-all", { method: "POST" }),
-  generateAlerts:   ()            => apiFetch("/alerts/generate", { method: "POST" }),
+  getAlerts:             (params = {}) => apiFetch(`/alerts/?${new URLSearchParams(params)}`),
+  markAlertRead:         (id)          => apiFetch(`/alerts/${id}/read`, { method: "POST" }),
+  markAllRead:           ()            => apiFetch("/alerts/read-all",       { method: "POST" }),
+  generateAlerts:        ()            => apiFetch("/alerts/generate",       { method: "POST" }),
+  getWeeklySummary:      ()            => apiFetch("/alerts/weekly-summary"),
+  generateWeeklySummary: ()            => apiFetch("/alerts/generate-weekly",{ method: "POST" }),
 
   // --- Dashboard ---
   getDashboard:     (params = {}) => apiFetch(`/dashboard/?${new URLSearchParams(params)}`),

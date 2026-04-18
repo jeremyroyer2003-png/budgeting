@@ -1392,3 +1392,102 @@ textarea.form-control { resize: vertical; }
   .health-gauge-side svg { max-width: 180px; }
   .health-comp-row { grid-template-columns: 140px 1fr 44px; }
 }
+
+/* ---- Weekly Digest Card ---- */
+.weekly-digest-card .card-header { border-bottom: 1px solid var(--border); }
+.weekly-digest-period {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.digest-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.digest-stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.digest-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.digest-stat-value.income  { color: var(--success); }
+.digest-stat-value.expense { color: var(--danger);  }
+.wow-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+.digest-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.digest-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+/* Top categories */
+.digest-cat-row {
+  display: grid;
+  grid-template-columns: 10px 110px 1fr 70px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.digest-cat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.digest-cat-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.digest-cat-bar-wrap { height: 5px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+.digest-cat-bar-fill { height: 100%; border-radius: 99px; }
+.digest-cat-amount { font-size: 12px; font-weight: 600; text-align: right; }
+/* Daily bar chart */
+.digest-daily {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 64px;
+}
+.digest-day-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.digest-day-bar-wrap {
+  width: 100%;
+  height: 48px;
+  display: flex;
+  align-items: flex-end;
+}
+.digest-day-bar {
+  width: 100%;
+  background: var(--primary);
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  opacity: 0.75;
+  transition: height 0.4s ease;
+}
+.digest-day-label { font-size: 10px; color: var(--text-secondary); }
+
+@media (max-width: 700px) {
+  .digest-stats-row { grid-template-columns: 1fr 1fr; }
+  .digest-two-col   { grid-template-columns: 1fr; }
+}

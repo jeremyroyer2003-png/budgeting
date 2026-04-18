@@ -195,6 +195,7 @@ window._appBoot = async function _appBoot() {
   populateAccountSelects();
   navigateTo("dashboard");
   refreshAlertBadge();
+  api.generateWeeklySummary().catch(() => {});
 };
 
 async function refreshAlertBadge() {

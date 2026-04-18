@@ -352,6 +352,22 @@
           </div>
         </div>
 
+        <!-- Weekly Digest Card -->
+        <div class="card weekly-digest-card" id="weeklyDigestCard">
+          <div class="card-header">
+            <h3><i data-feather="calendar"></i> Weekly Digest</h3>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="weekly-digest-period" id="weeklyPeriod">Loading…</span>
+              <button class="btn btn-ghost btn-sm" id="refreshWeeklyBtn" title="Refresh">
+                <i data-feather="refresh-cw"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body" id="weeklyDigestBody">
+            <div class="empty-state small">Loading…</div>
+          </div>
+        </div>
+
         <div id="alertList">
           <div class="empty-state">Loading…</div>
         </div>
