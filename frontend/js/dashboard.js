@@ -14,6 +14,7 @@ async function loadDashboard() {
   try {
     const data = await api.getDashboard({ month, year });
     renderSummaryCards(data);
+    renderHealthScore(data.health_score);
     renderProjection(data.projection);
     renderTrendChart(data.monthly_trend);
     renderCategoryChart(data.spending_by_category);
@@ -40,6 +41,60 @@ function renderSummaryCards(data) {
   netEl.style.color = data.net >= 0 ? "var(--success)" : "var(--danger)";
 
   document.getElementById("statSavingsRate").textContent = `${data.savings_rate}%`;
+}
+
+function renderHealthScore(hs) {
+  if (!hs) return;
+
+  // Animate the SVG gauge arc
+  const fill = document.getElementById("healthGaugeFill");
+  if (fill) {
+    const pct  = hs.score;        // 0-100
+    const r    = 85;
+    const cx   = 100, cy = 100;
+    if (pct <= 0) {
+      fill.setAttribute("d", `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx - r} ${cy}`);
+    } else {
+      const angle    = (pct / 100) * Math.PI;
+      const ex       = cx - r * Math.cos(angle);
+      const ey       = cy + r * Math.sin(angle);
+      const largeArc = pct > 50 ? 1 : 0;
+      fill.setAttribute("d", `M ${cx - r} ${cy} A ${r} ${r} 0 ${largeArc} 1 ${ex.toFixed(1)} ${ey.toFixed(1)}`);
+    }
+    fill.setAttribute("stroke", hs.color);
+  }
+
+  const numEl = document.getElementById("healthScoreNum");
+  if (numEl) { numEl.textContent = hs.score; numEl.setAttribute("fill", hs.color); }
+  const lblEl = document.getElementById("healthScoreLabel");
+  if (lblEl) lblEl.textContent = hs.label;
+
+  // Component bars
+  const container = document.getElementById("healthComponents");
+  const compMeta = {
+    savings_rate:     { icon: "trending-up",  label: "Savings Rate" },
+    budget_adherence: { icon: "sliders",       label: "Budget Adherence" },
+    goal_progress:    { icon: "target",        label: "Goal Progress" },
+    spending_trend:   { icon: "bar-chart-2",   label: "Spending Trend" },
+  };
+  container.innerHTML = Object.entries(hs.components).map(([key, comp]) => {
+    const meta = compMeta[key] || { icon: "circle", label: key };
+    const pct  = (comp.score / comp.max) * 100;
+    const barColor = pct >= 80 ? "var(--success)" : pct >= 50 ? "var(--warning)" : "var(--danger)";
+    return `
+      <div class="health-comp-row">
+        <div class="health-comp-label">
+          <i data-feather="${meta.icon}"></i>${meta.label}
+        </div>
+        <div class="health-comp-bar-wrap">
+          <div class="health-comp-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+        </div>
+        <div class="health-comp-pts">${comp.score}<span>/25</span></div>
+        <div class="health-comp-detail">${comp.detail}</div>
+      </div>
+    `;
+  }).join("");
+  if (window.feather) feather.replace();
 }
 
 function renderProjection(p) {

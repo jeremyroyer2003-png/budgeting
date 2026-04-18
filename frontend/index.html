@@ -117,6 +117,30 @@
           </div>
         </div>
 
+        <!-- Financial Health Score -->
+        <div class="card health-score-card">
+          <div class="card-header">
+            <h3><i data-feather="activity"></i> Financial Health Score</h3>
+          </div>
+          <div class="card-body health-body">
+            <div class="health-gauge-side">
+              <svg viewBox="0 0 200 115" id="healthGaugeSvg" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 15 100 A 85 85 0 0 1 185 100"
+                      fill="none" stroke="var(--border)" stroke-width="16" stroke-linecap="round"/>
+                <path id="healthGaugeFill" d="M 15 100 A 85 85 0 0 1 15 100"
+                      fill="none" stroke="#059669" stroke-width="16" stroke-linecap="round"/>
+                <text id="healthScoreNum" x="100" y="80" text-anchor="middle"
+                      font-size="44" font-weight="700" fill="currentColor">—</text>
+                <text id="healthScoreLabel" x="100" y="100" text-anchor="middle"
+                      font-size="13" fill="#6b7280">—</text>
+              </svg>
+            </div>
+            <div class="health-components" id="healthComponents">
+              <div class="empty-state small">Loading…</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Charts row -->
         <div class="card-grid-2">
           <div class="card">

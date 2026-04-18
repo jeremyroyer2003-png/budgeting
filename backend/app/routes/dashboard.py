@@ -8,6 +8,7 @@ from ..models import Transaction, Account, Goal, Alert, Budget, Category
 from ..services.budget_service import get_budget_summary
 from ..services.goal_service import enrich_goal
 from ..services.subscription_service import detect_subscriptions
+from ..services.health_score_service import compute_health_score
 from ..utils.auth import current_user_id
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -162,4 +163,5 @@ def get_dashboard():
         "recent_transactions": [t.to_dict() for t in recent],
         "unread_alerts":       unread_alerts,
         "projection":          projection,
+        "health_score":        compute_health_score(uid, month, year),
     })
