@@ -65,6 +65,9 @@ const api = {
   // --- Dashboard ---
   getDashboard:     (params = {}) => apiFetch(`/dashboard/?${new URLSearchParams(params)}`),
 
+  // --- Subscriptions ---
+  getSubscriptions: () => apiFetch("/subscriptions/"),
+
   // --- Plaid sandbox ---
   plaidLinkToken:    ()        => apiFetch("/plaid/link-token",    { method: "POST" }),
   plaidExchangeToken:(token)   => apiFetch("/plaid/exchange-token", {

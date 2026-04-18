@@ -1135,6 +1135,94 @@ textarea.form-control { resize: vertical; }
   font-weight: 400;
 }
 
+/* ============================================================
+   SUBSCRIPTIONS PAGE
+   ============================================================ */
+.sub-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.sub-summary-item {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sub-summary-label { font-size: 12px; color: var(--text-secondary); }
+.sub-summary-value { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+
+.sub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.sub-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow var(--transition);
+}
+.sub-card:hover         { box-shadow: var(--shadow); }
+.sub-card-urgent        { border-color: var(--warning); }
+
+.sub-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sub-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.sub-icon svg   { width: 16px; height: 16px; }
+.sub-info       { flex: 1; min-width: 0; }
+.sub-name       { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub-freq       { font-size: 12px; color: var(--text-secondary); }
+.sub-amount     { font-size: 16px; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+
+.sub-price-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--warning);
+  background: var(--warning-light);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+}
+.sub-price-alert svg { width: 12px; height: 12px; }
+
+.sub-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.sub-next {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.sub-next svg       { width: 12px; height: 12px; }
+.sub-next-soon      { color: var(--warning); font-weight: 600; }
+.sub-monthly        { font-size: 12px; color: var(--text-secondary); }
+
 /* Transfer badge in transaction list */
 .transfer-badge {
   display: inline-flex;

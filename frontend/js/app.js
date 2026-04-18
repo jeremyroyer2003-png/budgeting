@@ -33,11 +33,12 @@ function navigateTo(page) {
 }
 
 const pageTitles = {
-  dashboard:    "Dashboard",
-  transactions: "Transactions",
-  budgets:      "Budgets",
-  goals:        "Financial Goals",
-  alerts:       "Alerts",
+  dashboard:     "Dashboard",
+  transactions:  "Transactions",
+  budgets:       "Budgets",
+  goals:         "Financial Goals",
+  subscriptions: "Subscriptions",
+  alerts:        "Alerts",
 };
 
 function loadPage(page) {
@@ -45,8 +46,9 @@ function loadPage(page) {
     case "dashboard":    loadDashboard();    break;
     case "transactions": loadTransactions(); break;
     case "budgets":      loadBudgets();      break;
-    case "goals":        loadGoals();        break;
-    case "alerts":       loadAlerts();       break;
+    case "goals":          loadGoals();          break;
+    case "subscriptions":  loadSubscriptions();  break;
+    case "alerts":         loadAlerts();         break;
   }
 }
 
