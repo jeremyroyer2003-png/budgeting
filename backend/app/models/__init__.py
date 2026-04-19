@@ -8,9 +8,11 @@ from .goal import Goal
 from .alert import Alert
 from .plaid_connection import PlaidConnection
 from .provider_connection import ProviderConnection
+from .household import Household, HouseholdMember, HouseholdInvite
 
 __all__ = [
     "User", "Account", "Category", "Transaction",
     "RecurringTransaction", "Budget", "Goal", "Alert",
-    "PlaidConnection", "ProviderConnection"
+    "PlaidConnection", "ProviderConnection",
+    "Household", "HouseholdMember", "HouseholdInvite",
 ]

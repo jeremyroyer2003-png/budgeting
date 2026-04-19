@@ -70,6 +70,17 @@ const api = {
   // --- Subscriptions ---
   getSubscriptions: () => apiFetch("/subscriptions/"),
 
+  // --- Insights ---
+  getPeerComparison: (params = {}) => apiFetch(`/insights/peer-comparison?${new URLSearchParams(params)}`),
+
+  // --- Household (family mode) ---
+  getHousehold:    ()       => apiFetch("/household/me"),
+  createHousehold: (data)   => apiFetch("/household/",                      { method: "POST",   body: JSON.stringify(data) }),
+  inviteMember:    (data)   => apiFetch("/household/invite",                { method: "POST",   body: JSON.stringify(data) }),
+  acceptInvite:    (token)  => apiFetch(`/household/invite/${token}/accept`, { method: "POST" }),
+  leaveHousehold:  ()       => apiFetch("/household/leave",                 { method: "DELETE" }),
+  removeMember:    (id)     => apiFetch(`/household/members/${id}`,         { method: "DELETE" }),
+
   // --- Plaid sandbox ---
   plaidLinkToken:    ()        => apiFetch("/plaid/link-token",    { method: "POST" }),
   plaidExchangeToken:(token)   => apiFetch("/plaid/exchange-token", {

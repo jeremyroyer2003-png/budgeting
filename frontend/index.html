@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ClearBudget — Personal Finance Dashboard</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4F46E5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ClearBudget" />
+  <link rel="apple-touch-icon" href="icons/icon-192.svg" />
+
   <link rel="stylesheet" href="css/style.css" />
   <!-- Chart.js for dashboard charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -39,12 +48,21 @@
       <a href="#" class="nav-item" data-page="subscriptions">
         <i data-feather="repeat"></i><span>Subscriptions</span>
       </a>
+      <a href="#" class="nav-item" data-page="insights">
+        <i data-feather="bar-chart"></i><span>Insights</span>
+      </a>
       <a href="#" class="nav-item" data-page="alerts">
         <i data-feather="bell"></i><span>Alerts <span class="badge" id="alertBadge"></span></span>
+      </a>
+      <a href="#" class="nav-item" data-page="family">
+        <i data-feather="users"></i><span>Family</span>
       </a>
     </nav>
 
     <div class="sidebar-footer">
+      <button class="btn-icon dark-toggle" id="darkToggle" title="Switch to dark mode">
+        <i data-feather="moon"></i>
+      </button>
       <div class="user-pill">
         <div class="user-avatar" id="userAvatar">--</div>
         <div class="user-info">
@@ -373,6 +391,36 @@
         </div>
       </section>
 
+      <!-- INSIGHTS PAGE -->
+      <section id="page-insights" class="page">
+        <div class="page-header">
+          <h1>Insights</h1>
+          <div class="page-header-right">
+            <span class="insights-period-label" id="insightsPeriod"></span>
+            <span class="insights-monthly-label" id="insightsMonthly"></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3><i data-feather="bar-chart"></i> Spending vs. Typical Household</h3>
+            <span class="card-subtitle">Based on Statistics Canada household expenditure data</span>
+          </div>
+          <div class="card-body" id="insightsList">
+            <div class="empty-state small">Loading…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAMILY PAGE -->
+      <section id="page-family" class="page">
+        <div class="page-header">
+          <h1>Family Mode</h1>
+        </div>
+        <div id="familyContent">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -616,6 +664,8 @@
   <script src="js/goals.js"></script>
   <script src="js/alerts.js"></script>
   <script src="js/subscriptions.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/family.js"></script>
   <script src="js/plaid.js"></script>
 </body>
 </html>

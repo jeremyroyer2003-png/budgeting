@@ -2,6 +2,12 @@
  * app.js — Core SPA shell: routing, modal system, toasts, shared state.
  */
 
+// ---- Dark mode (applied before render to prevent flash) ----
+(function () {
+  if (localStorage.getItem("clearbudget-theme") === "dark")
+    document.documentElement.setAttribute("data-theme", "dark");
+})();
+
 // ---- Global state ----
 const state = {
   currentPage: "dashboard",
@@ -25,10 +31,7 @@ function navigateTo(page) {
   document.getElementById("topbarTitle").textContent = pageTitles[page] || page;
   state.currentPage = page;
 
-  // Close sidebar on mobile
   document.getElementById("sidebar").classList.remove("open");
-
-  // Lazy-load page data
   loadPage(page);
 }
 
@@ -38,7 +41,9 @@ const pageTitles = {
   budgets:       "Budgets",
   goals:         "Financial Goals",
   subscriptions: "Subscriptions",
+  insights:      "Insights",
   alerts:        "Alerts",
+  family:        "Family Mode",
 };
 
 function loadPage(page) {
@@ -46,10 +51,35 @@ function loadPage(page) {
     case "dashboard":    loadDashboard();    break;
     case "transactions": loadTransactions(); break;
     case "budgets":      loadBudgets();      break;
-    case "goals":          loadGoals();          break;
-    case "subscriptions":  loadSubscriptions();  break;
-    case "alerts":         loadAlerts();         break;
+    case "goals":        loadGoals();        break;
+    case "subscriptions":loadSubscriptions();break;
+    case "insights":     loadInsights();     break;
+    case "alerts":       loadAlerts();       break;
+    case "family":       loadFamily();       break;
   }
+}
+
+// ---- Dark mode toggle ----
+function _applyTheme(theme) {
+  if (theme === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  const btn = document.getElementById("darkToggle");
+  if (btn) {
+    btn.innerHTML = theme === "dark"
+      ? '<i data-feather="sun"></i>'
+      : '<i data-feather="moon"></i>';
+    btn.title = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+    if (window.feather) feather.replace();
+  }
+}
+
+function toggleTheme() {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  localStorage.setItem("clearbudget-theme", next);
+  _applyTheme(next);
 }
 
 // ---- Modal system ----
@@ -81,7 +111,7 @@ function confirmDelete(message, onConfirm) {
     onConfirm();
     btn.removeEventListener("click", handler);
   };
-  btn.removeEventListener("click", handler); // safety
+  btn.removeEventListener("click", handler);
   btn.addEventListener("click", handler);
 }
 
@@ -114,7 +144,6 @@ function populateCategorySelects(filterType = null) {
   const selects = document.querySelectorAll("#txCategory, #budgetCategory, #txCategoryFilter");
   selects.forEach(sel => {
     const prev = sel.value;
-    // keep placeholder option if present
     if (sel.id === "txCategoryFilter") {
       sel.innerHTML = '<option value="">All categories</option>';
     } else {
@@ -149,6 +178,9 @@ function populateAccountSelects() {
 
 // ---- Wire up navigation ----
 document.addEventListener("DOMContentLoaded", () => {
+  // Apply saved theme
+  _applyTheme(localStorage.getItem("clearbudget-theme") || "light");
+
   if (window.feather) feather.replace();
 
   // Nav links
@@ -168,6 +200,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("sidebar").classList.remove("open");
   });
 
+  // Dark mode toggle
+  document.getElementById("darkToggle").addEventListener("click", toggleTheme);
+
   // Modal close buttons
   document.querySelectorAll("[data-close]").forEach(btn => {
     btn.addEventListener("click", () => closeModal(btn.dataset.close));
@@ -185,7 +220,10 @@ document.addEventListener("DOMContentLoaded", () => {
     openAddTxModal();
   });
 
-  // auth.js calls _appBoot() after a successful login / on page load if already authenticated
+  // Register PWA service worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }
 });
 
 // Called by auth.js once a valid session is confirmed

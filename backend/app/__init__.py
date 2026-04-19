@@ -30,6 +30,7 @@ def create_app(config_name="default"):
         transactions_bp, categories_bp, budgets_bp,
         goals_bp, alerts_bp, accounts_bp, dashboard_bp, recurring_bp,
         plaid_bp, providers_bp, subscriptions_bp,
+        insights_bp, household_bp,
     )
     app.register_blueprint(auth_bp,           url_prefix="/api/auth")
     app.register_blueprint(transactions_bp,   url_prefix="/api/transactions")
@@ -43,6 +44,8 @@ def create_app(config_name="default"):
     app.register_blueprint(plaid_bp,          url_prefix="/api/plaid")
     app.register_blueprint(providers_bp,      url_prefix="/api/providers")
     app.register_blueprint(subscriptions_bp,  url_prefix="/api/subscriptions")
+    app.register_blueprint(insights_bp,       url_prefix="/api/insights")
+    app.register_blueprint(household_bp,      url_prefix="/api/household")
 
     with app.app_context():
         db.create_all()
