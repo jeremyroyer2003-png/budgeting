@@ -135,6 +135,32 @@
           </div>
         </div>
 
+        <!-- Buffer Days + Savings Streak -->
+        <div class="card-grid-2">
+          <div class="stat-card runway" id="bufferCard">
+            <div class="stat-icon"><i data-feather="shield"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Financial Runway</div>
+              <div class="stat-value" id="statBufferDays">—</div>
+              <div class="stat-sub" id="statBufferSub">days of expenses covered</div>
+            </div>
+          </div>
+          <div class="stat-card streak" id="streakCard">
+            <div class="stat-icon"><i data-feather="zap"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Savings Streak</div>
+              <div class="stat-value" id="statSavingsStreak">—</div>
+              <div class="stat-sub" id="statStreakSub">consecutive months under budget</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Insight -->
+        <div class="card insight-card" id="insightCard" style="display:none">
+          <div class="insight-icon"><i data-feather="zap"></i></div>
+          <p class="insight-text" id="dailyInsightText"></p>
+        </div>
+
         <!-- Financial Health Score -->
         <div class="card health-score-card">
           <div class="card-header">
@@ -457,8 +483,8 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="txDescription">Description</label>
-          <input type="text" id="txDescription" class="form-control" placeholder="e.g. Monthly rent" />
+          <label for="txDescription">What was this for?</label>
+          <input type="text" id="txDescription" class="form-control" placeholder="e.g. Groceries for the week" />
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -468,6 +494,36 @@
           <div class="form-group">
             <label for="txAccount">Account</label>
             <select id="txAccount" class="form-control"></select>
+          </div>
+        </div>
+        <!-- Kakeibo reflection — shown for expenses only -->
+        <div class="form-group kakeibo-group" id="kakeiboGroup">
+          <label for="txKakeibo">Was this spending…</label>
+          <div class="kakeibo-options" id="txKakeibo">
+            <label class="kakeibo-btn" data-value="need">
+              <input type="radio" name="txKakeibo" value="need" />
+              <span class="kakeibo-icon">🏠</span>
+              <span class="kakeibo-label">Need</span>
+              <span class="kakeibo-sub">Essential</span>
+            </label>
+            <label class="kakeibo-btn" data-value="want">
+              <input type="radio" name="txKakeibo" value="want" />
+              <span class="kakeibo-icon">✨</span>
+              <span class="kakeibo-label">Want</span>
+              <span class="kakeibo-sub">Nice to have</span>
+            </label>
+            <label class="kakeibo-btn" data-value="culture">
+              <input type="radio" name="txKakeibo" value="culture" />
+              <span class="kakeibo-icon">📚</span>
+              <span class="kakeibo-label">Culture</span>
+              <span class="kakeibo-sub">Learning & growth</span>
+            </label>
+            <label class="kakeibo-btn" data-value="unexpected">
+              <input type="radio" name="txKakeibo" value="unexpected" />
+              <span class="kakeibo-icon">⚡</span>
+              <span class="kakeibo-label">Unexpected</span>
+              <span class="kakeibo-sub">Unplanned</span>
+            </label>
           </div>
         </div>
         <div class="modal-footer">

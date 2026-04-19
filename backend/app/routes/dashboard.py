@@ -1,5 +1,5 @@
 import calendar
-from datetime import date
+from datetime import date, timedelta
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from sqlalchemy import extract, func
@@ -147,6 +147,51 @@ def get_dashboard():
             "confidence":      confidence,
         }
 
+    # --- Buffer days (balance ÷ avg daily expense last 30 days) ---
+    buffer_days = None
+    if account_ids and total_balance > 0:
+        cutoff_30 = today - timedelta(days=30)
+        exp_30 = db.session.query(func.sum(Transaction.amount)).filter(
+            Transaction.account_id.in_(account_ids),
+            Transaction.type == "expense",
+            Transaction.date >= cutoff_30,
+        ).scalar() or 0.0
+        avg_daily = float(exp_30) / 30.0
+        if avg_daily > 0:
+            buffer_days = round(total_balance / avg_daily)
+
+    # --- Under-budget streak (consecutive months ending on or before last month) ---
+    streak = 0
+    check_m, check_y = month - 1, year
+    if check_m <= 0:
+        check_m, check_y = 12, year - 1
+    for _ in range(12):
+        inc = db.session.query(func.sum(Transaction.amount)).filter(
+            Transaction.account_id.in_(account_ids),
+            Transaction.type == "income",
+            extract("month", Transaction.date) == check_m,
+            extract("year",  Transaction.date) == check_y,
+        ).scalar() or 0.0
+        exp = db.session.query(func.sum(Transaction.amount)).filter(
+            Transaction.account_id.in_(account_ids),
+            Transaction.type == "expense",
+            extract("month", Transaction.date) == check_m,
+            extract("year",  Transaction.date) == check_y,
+        ).scalar() or 0.0
+        if inc > 0 and exp < inc:
+            streak += 1
+            check_m -= 1
+            if check_m <= 0:
+                check_m, check_y = 12, check_y - 1
+        else:
+            break
+
+    # --- Daily insight (one interpreted sentence) ---
+    daily_insight = _compute_daily_insight(
+        budget_summary, savings_rate, net, total_income, goals_data,
+        spending_by_category, month, year, today
+    )
+
     return jsonify({
         "month":               month,
         "year":                year,
@@ -164,4 +209,69 @@ def get_dashboard():
         "unread_alerts":       unread_alerts,
         "projection":          projection,
         "health_score":        compute_health_score(uid, month, year),
+        "buffer_days":         buffer_days,
+        "savings_streak":      streak,
+        "daily_insight":       daily_insight,
     })
+
+
+def _compute_daily_insight(budget_summary, savings_rate, net, total_income,
+                            goals_data, spending_by_category, month, year, today):
+    """Return one plain-language sentence that interprets the most important thing happening."""
+    is_current = (month == today.month and year == today.year)
+
+    # Priority 1: budget is over
+    over = [b for b in budget_summary if b["over_budget"]]
+    if over:
+        worst = max(over, key=lambda b: b["actual_amount"] - b["target_amount"])
+        overage = round(worst["actual_amount"] - worst["target_amount"], 2)
+        days_left = calendar.monthrange(year, month)[1] - today.day if is_current else 0
+        if days_left > 1:
+            return (
+                f"⚠ You're ${overage:,.2f} over your {worst['category_name']} budget — "
+                f"with {days_left} days left, spending ${round(overage/days_left,2):,.2f}/day "
+                f"less would close the gap."
+            )
+        return f"⚠ You finished the month ${overage:,.2f} over your {worst['category_name']} budget."
+
+    # Priority 2: savings rate is good
+    if savings_rate >= 20 and total_income > 0:
+        annual = round(net * 12, 2)
+        return (
+            f"✓ You're saving {savings_rate}% of your income this month — "
+            f"at this rate that's ${annual:,.2f} saved this year."
+        )
+
+    # Priority 3: goal about to be reached
+    close_goals = [g for g in goals_data if 90 <= (g.get("progress_pct") or 0) < 100]
+    if close_goals:
+        g = close_goals[0]
+        remaining = round(g.get("remaining", 0), 2)
+        return (
+            f"🎯 You're {g['progress_pct']:.0f}% of the way to '{g['name']}' — "
+            f"only ${remaining:,.2f} to go!"
+        )
+
+    # Priority 4: positive net with actionable redirect
+    if net > 0 and goals_data:
+        top_goal = min(
+            [g for g in goals_data if (g.get("progress_pct") or 0) < 100],
+            key=lambda g: g.get("progress_pct") or 0,
+            default=None,
+        )
+        if top_goal:
+            return (
+                f"💡 You're ahead ${net:,.2f} this month — redirecting it to "
+                f"'{top_goal['name']}' would move that goal {round(net / max(top_goal.get('target_amount', 1), 1) * 100, 1)}% closer."
+            )
+
+    # Priority 5: top spending category context
+    if spending_by_category:
+        top_cat = spending_by_category[0]
+        pct = round(top_cat["total"] / max(sum(c["total"] for c in spending_by_category), 1) * 100)
+        return (
+            f"📊 {top_cat['name']} is your biggest spend this month at "
+            f"${top_cat['total']:,.2f} ({pct}% of total expenses)."
+        )
+
+    return "Add your transactions to start tracking your financial health."

@@ -53,6 +53,11 @@ function renderGoalCards(goals) {
       metaHtml += `<span style="color:var(--danger)">Need <strong>${fmtCurrency(g.needed_per_month)}/mo</strong> to stay on track</span>`;
     }
 
+    // Time-to-goal headline
+    const timeHeadline = buildTimeHeadline(g);
+    // Actionable gap
+    const actionableGap = buildActionableGap(g);
+
     return `
       <div class="goal-card">
         <div class="goal-card-header">
@@ -60,9 +65,11 @@ function renderGoalCards(goals) {
           <span class="goal-type-tag ${g.type}">${goalTypeLabel(g.type)}</span>
         </div>
 
-        <div>
+        ${timeHeadline}
+
+        <div class="goal-amounts-row">
           <div class="goal-current">${fmtCurrency(g.current_amount)}</div>
-          <div class="goal-of-total">of ${fmtCurrency(g.target_amount)} · ${pct}% complete</div>
+          <div class="goal-of-total">of ${fmtCurrency(g.target_amount)}</div>
         </div>
 
         <!-- 3-layer Ghost Bar -->
@@ -72,14 +79,19 @@ function renderGoalCards(goals) {
             : ""}
           <div class="goal-progress-fill ${fillClass}" style="width:${Math.min(pct, 100)}%"></div>
         </div>
+        <div class="goal-pct-row">
+          <span class="goal-pct-label">${pct}% complete</span>
+          ${ghostPct != null ? `<span class="goal-ghost-label">Target pace: ${Math.round(ghostPct)}%</span>` : ""}
+        </div>
 
+        ${actionableGap}
         ${buildVelocityInsight(g)}
 
         <div class="goal-meta">${metaHtml}</div>
 
         ${onTrackEl}
 
-        ${g.notes ? `<div style="font-size:12px;color:var(--text-secondary)">${escGoal(g.notes)}</div>` : ""}
+        ${g.notes ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${escGoal(g.notes)}</div>` : ""}
 
         <div class="goal-actions">
           <button class="btn btn-ghost btn-sm" onclick="openEditGoalModal(${g.id})">
@@ -134,6 +146,62 @@ function buildOnTrackChip(g) {
   } else if (g.on_track === false) {
     return `<span class="on-track-chip no"><i data-feather="alert-circle"></i> At risk</span>`;
   }
+  return "";
+}
+
+function buildTimeHeadline(g) {
+  if (g.progress_pct >= 100) {
+    return `<div class="goal-time-headline complete">🎉 Goal reached!</div>`;
+  }
+  if (g.projected_completion) {
+    const projDate  = new Date(g.projected_completion + "T00:00:00");
+    const now       = new Date();
+    const msLeft    = projDate - now;
+    const daysLeft  = Math.ceil(msLeft / 86400000);
+    const label     = projDate.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
+    if (daysLeft <= 30) {
+      return `<div class="goal-time-headline urgent">Almost there — ${daysLeft} day${daysLeft !== 1 ? "s" : ""} to go</div>`;
+    }
+    const monthsLeft = Math.round(daysLeft / 30.44);
+    const diffLabel  = g.projected_months_diff != null && Math.abs(g.projected_months_diff) > 0.5
+      ? (g.projected_months_diff > 0
+          ? ` <span class="behind">(${Math.round(g.projected_months_diff)}mo late)</span>`
+          : ` <span class="ahead">(${Math.abs(Math.round(g.projected_months_diff))}mo early)</span>`)
+      : "";
+    return `<div class="goal-time-headline">On track for <strong>${label}</strong>${diffLabel} · ${monthsLeft} month${monthsLeft !== 1 ? "s" : ""} away</div>`;
+  }
+  if (g.months_left != null) {
+    return `<div class="goal-time-headline">${g.months_left} month${g.months_left !== 1 ? "s" : ""} to target date</div>`;
+  }
+  return "";
+}
+
+function buildActionableGap(g) {
+  if (g.progress_pct >= 100) return "";
+  const remaining = g.target_amount - g.current_amount;
+  if (remaining <= 0) return "";
+
+  // If behind pace, show exactly how much more per month is needed
+  if (g.on_track === false && g.needed_per_month != null && g.monthly_target != null) {
+    const gap = g.needed_per_month - g.monthly_target;
+    if (gap > 0) {
+      return `<div class="goal-gap-callout">
+        <i data-feather="alert-circle"></i>
+        Add <strong>${fmtCurrency(gap)}/month</strong> to get back on track
+        — you need ${fmtCurrency(g.needed_per_month)}/mo total
+      </div>`;
+    }
+  }
+
+  // If no monthly target set
+  if (!g.monthly_target && g.months_left != null && g.months_left > 0) {
+    const suggested = Math.ceil(remaining / g.months_left);
+    return `<div class="goal-gap-callout info">
+      <i data-feather="info"></i>
+      Save <strong>${fmtCurrency(suggested)}/month</strong> to reach your target on time
+    </div>`;
+  }
+
   return "";
 }
 

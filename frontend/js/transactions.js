@@ -126,6 +126,7 @@ function openAddTxModal() {
 
   // Re-filter categories when type radio changes
   bindTxTypeChange();
+  _updateKakeiboVisibility(type);
   openModal("txModal");
 }
 
@@ -150,6 +151,7 @@ async function openEditTxModal(txId) {
     document.getElementById("txAccount").value = tx.account_id || "";
 
     bindTxTypeChange();
+    _updateKakeiboVisibility(tx.type);
     openModal("txModal");
   } catch (err) {
     showToast("Could not load transaction.", "error");
@@ -159,8 +161,16 @@ async function openEditTxModal(txId) {
 function bindTxTypeChange() {
   // onchange assignment naturally replaces any prior handler — no stacking on repeated opens
   document.querySelectorAll("input[name='txType']").forEach(radio => {
-    radio.onchange = () => populateTxCategorySelect(radio.value);
+    radio.onchange = () => {
+      populateTxCategorySelect(radio.value);
+      _updateKakeiboVisibility(radio.value);
+    };
   });
+}
+
+function _updateKakeiboVisibility(type) {
+  const grp = document.getElementById("kakeiboGroup");
+  if (grp) grp.style.display = type === "expense" ? "" : "none";
 }
 
 async function deleteTx(txId) {

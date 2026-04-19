@@ -14,6 +14,7 @@ async function loadDashboard() {
   try {
     const data = await api.getDashboard({ month, year });
     renderSummaryCards(data);
+    renderInsightCards(data);
     renderHealthScore(data.health_score);
     renderProjection(data.projection);
     renderTrendChart(data.monthly_trend);
@@ -41,6 +42,46 @@ function renderSummaryCards(data) {
   netEl.style.color = data.net >= 0 ? "var(--success)" : "var(--danger)";
 
   document.getElementById("statSavingsRate").textContent = `${data.savings_rate}%`;
+}
+
+function renderInsightCards(data) {
+  // Daily insight banner
+  const insightEl = document.getElementById("dailyInsightText");
+  if (insightEl && data.daily_insight) {
+    insightEl.textContent = data.daily_insight;
+    document.getElementById("insightCard").style.display = "";
+  }
+
+  // Buffer days
+  const bufferEl = document.getElementById("statBufferDays");
+  if (bufferEl) {
+    if (data.buffer_days != null) {
+      bufferEl.textContent = data.buffer_days;
+      const sub = document.getElementById("statBufferSub");
+      if (sub) {
+        const level = data.buffer_days >= 90 ? "excellent" : data.buffer_days >= 30 ? "good" : "low";
+        sub.textContent = level === "excellent" ? "3+ months runway — excellent!" :
+                          level === "good"      ? "30+ days — you're covered" :
+                                                  "Less than 30 days — build your cushion";
+        sub.className = `stat-sub buffer-${level}`;
+      }
+    } else {
+      document.getElementById("bufferCard").style.display = "none";
+    }
+  }
+
+  // Savings streak
+  const streakEl = document.getElementById("statSavingsStreak");
+  if (streakEl) {
+    if (data.savings_streak != null && data.savings_streak > 0) {
+      streakEl.textContent = data.savings_streak;
+      const sub = document.getElementById("statStreakSub");
+      if (sub) sub.textContent = data.savings_streak === 1 ? "month in a row — keep going!" :
+                                  `consecutive months — ${data.savings_streak >= 3 ? "amazing streak!" : "great work!"}`;
+    } else {
+      document.getElementById("streakCard").style.display = "none";
+    }
+  }
 }
 
 function renderHealthScore(hs) {
@@ -91,6 +132,7 @@ function renderHealthScore(hs) {
         </div>
         <div class="health-comp-pts">${comp.score}<span>/25</span></div>
         <div class="health-comp-detail">${comp.detail}</div>
+        ${comp.tip ? `<div class="health-comp-tip">${comp.tip}</div>` : ""}
       </div>
     `;
   }).join("");

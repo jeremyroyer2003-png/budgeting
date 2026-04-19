@@ -28,16 +28,51 @@ function renderBudgetCards(summary, month, year) {
     return;
   }
 
+  // Compute days remaining in this month (for current month only)
+  const today       = new Date();
+  const isCurrentMonth = (month === today.getMonth() + 1 && year === today.getFullYear());
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const daysElapsed = isCurrentMonth ? today.getDate() : daysInMonth;
+  const daysLeft    = isCurrentMonth ? daysInMonth - today.getDate() : 0;
+
   container.innerHTML = summary.map(b => {
-    // Bar width is visually capped at 100%; the label shows the real number
     const barWidth  = Math.min(b.pct_used, 100);
     const fillClass = b.over_budget ? "over" : b.pct_used >= 80 ? "warn" : "good";
     const pctLabel  = b.over_budget
       ? `<span class="pct-over">${b.pct_used.toFixed(0)}% used</span>`
       : `${b.pct_used.toFixed(0)}% used`;
-    const remainLabel = b.over_budget
-      ? `<span class="over-label">Over by ${fmtCurrency(Math.abs(b.remaining))}</span>`
-      : `${fmtCurrency(b.remaining)} left`;
+
+    // Actionable bottom line
+    let bottomLine = "";
+    if (b.over_budget) {
+      const over = Math.abs(b.remaining);
+      bottomLine = `<div class="budget-action-line over">
+        <i data-feather="alert-circle"></i>
+        Over by <strong>${fmtCurrency(over)}</strong>${isCurrentMonth && daysLeft > 0
+          ? ` — spend <strong>${fmtCurrency(over / daysLeft)}/day</strong> less to recover`
+          : ""}
+      </div>`;
+    } else if (b.pct_used >= 80 && isCurrentMonth && daysLeft > 0) {
+      const dailyBudget = b.remaining / daysLeft;
+      bottomLine = `<div class="budget-action-line warn">
+        <i data-feather="alert-triangle"></i>
+        <strong>${fmtCurrency(b.remaining)} left</strong> for ${daysLeft} day${daysLeft !== 1 ? "s" : ""}
+        — <strong>${fmtCurrency(dailyBudget)}/day</strong> to stay on track
+      </div>`;
+    } else if (!b.over_budget && b.remaining > 0) {
+      if (isCurrentMonth && daysLeft > 0) {
+        const dailyBudget = b.remaining / daysLeft;
+        bottomLine = `<div class="budget-action-line good">
+          <i data-feather="check-circle"></i>
+          <strong>${fmtCurrency(b.remaining)} left</strong> · ${fmtCurrency(dailyBudget)}/day for ${daysLeft} more day${daysLeft !== 1 ? "s" : ""}
+        </div>`;
+      } else {
+        bottomLine = `<div class="budget-action-line good">
+          <i data-feather="check-circle"></i>
+          Finished ${fmtCurrency(b.remaining)} under budget — great discipline!
+        </div>`;
+      }
+    }
 
     return `
       <div class="budget-card">
@@ -57,9 +92,9 @@ function renderBudgetCards(summary, month, year) {
           </div>
         </div>
         <div class="budget-footer">
-          <span>${remainLabel}</span>
           <span>${pctLabel}</span>
         </div>
+        ${bottomLine}
         <div style="display:flex;justify-content:flex-end;margin-top:8px;">
           <button class="btn btn-ghost btn-sm" onclick="openBudgetModal(${b.budget_id},${b.category_id},${b.target_amount})">
             Edit

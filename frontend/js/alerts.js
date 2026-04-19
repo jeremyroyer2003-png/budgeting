@@ -79,6 +79,13 @@ function renderWeeklyDigest(d) {
       </div>`;
   }).join("");
 
+  const challengeHtml = d.challenge
+    ? `<div class="digest-challenge">
+        <div class="digest-challenge-label"><i data-feather="target"></i> This Week's Challenge</div>
+        <div class="digest-challenge-text">${escAlert(d.challenge)}</div>
+       </div>`
+    : "";
+
   body.innerHTML = `
     <div class="digest-stats-row">
       <div class="digest-stat">
@@ -110,7 +117,10 @@ function renderWeeklyDigest(d) {
         <div class="digest-daily">${dailyHtml}</div>
       </div>
     </div>
+
+    ${challengeHtml}
   `;
+  if (window.feather) feather.replace();
 }
 
 // ---- Alert list ----

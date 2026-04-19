@@ -75,6 +75,8 @@ def compute_weekly_summary(account_ids: list) -> dict | None:
         exp = _period_total(account_ids, "expense", d, d)
         daily.append({"date": d.isoformat(), "label": d.strftime("%a"), "amount": exp})
 
+    challenge = _compute_challenge(top_cats, wow_pct, this_exp, prev_exp)
+
     return {
         "week_start":  ws.isoformat(),
         "week_end":    we.isoformat(),
@@ -87,7 +89,36 @@ def compute_weekly_summary(account_ids: list) -> dict | None:
         "tx_count":      tx_count,
         "top_categories": top_cats,
         "daily":          daily,
+        "challenge":      challenge,
     }
+
+
+def _compute_challenge(top_cats, wow_pct, this_exp, prev_exp) -> str:
+    """Return one concrete, achievable challenge for the coming week."""
+    if not top_cats:
+        return "Log every expense this week — awareness is the first step to change."
+
+    top = top_cats[0]
+    if wow_pct is not None and wow_pct > 10:
+        target = round(top["total"] * 0.9, 2)
+        return (
+            f"Your spending jumped {wow_pct:.0f}% vs last week. "
+            f"This week, try to keep {top['name']} under ${target:,.2f} — "
+            f"that's 10% less than what you spent on it last week."
+        )
+    elif wow_pct is not None and wow_pct < -10:
+        return (
+            f"You spent {abs(wow_pct):.0f}% less than last week — great discipline! "
+            f"This week, redirect those savings to your top financial goal."
+        )
+    elif this_exp > 0:
+        target = round(this_exp * 0.95, 2)
+        return (
+            f"Your biggest spend was {top['name']} at ${top['total']:,.2f}. "
+            f"This week, see if you can reduce it by just 5% — "
+            f"small cuts add up to ${round(top['total'] * 0.05 * 52, 0):,.0f}/year."
+        )
+    return "Track every purchase this week, no matter how small. Awareness changes behaviour."
 
 
 def weekly_alert_message(summary: dict) -> str:
